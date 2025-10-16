@@ -1,0 +1,300 @@
+# ActMap - 整合配置文件（基础功能 + 重复选项）
+
+# === 动作定义 ===
+# ## install
+[actions.install]
+description = "安装软件包"
+args = ["pkgs"]
+
+[actions.install.pacman]
+cmd_format = "pacman -S {pkgs}"
+
+[actions.install.apt]
+cmd_format = "apt install {pkgs}"
+
+# ## remove
+[actions.remove]
+description = "卸载软件包"
+args = ["pkgs"]
+
+[actions.remove.pacman]
+cmd_format = "pacman -R {pkgs}"
+
+[actions.remove.apt]
+cmd_format = "apt remove {pkgs}"
+
+# ## search
+[actions.search]
+description = "搜索软件包"
+args = ["pkgs"]
+
+[actions.search.pacman]
+cmd_format = "pacman -Ss {pkgs}"
+
+[actions.search.apt]
+cmd_format = "apt search {pkgs}"
+
+# ## update
+[actions.update]
+description = "更新软件包数据库"
+args = []
+
+[actions.update.pacman]
+cmd_format = "pacman -Sy"
+
+[actions.update.apt]
+cmd_format = "apt update"
+
+# ## upgrade
+[actions.upgrade]
+description = "升级所有软件包"
+args = []
+
+[actions.upgrade.pacman]
+cmd_format = "pacman -Syu"
+
+[actions.upgrade.apt]
+cmd_format = "apt upgrade"
+
+# ## force_update
+[actions.force_update]
+description = "强制更新软件包数据库"
+args = []
+
+[actions.force_update.pacman]
+cmd_format = "pacman -Syy"
+
+[actions.force_update.apt]
+cmd_format = "apt update --refresh-all"
+
+# ## force_upgrade
+[actions.force_upgrade]
+description = "强制刷新并升级系统"
+args = []
+
+[actions.force_upgrade.pacman]
+cmd_format = "pacman -Syyu"
+
+[actions.force_upgrade.apt]
+cmd_format = "apt update --refresh-all && apt upgrade"
+
+# ## help
+[actions.help]
+description = "显示帮助信息"
+args = []
+
+[actions.help.pacman]
+cmd_format = "pacman -h"
+
+[actions.help.apt]
+cmd_format = "apt --help"
+
+# === pacman 命令的参数解析与动作匹配规则 ===
+# ## 参数解析
+[action_interfaces.pacman.args]
+arg_parser = "getopt"
+
+# 全局参数 -h
+[[action_interfaces.pacman.args.arg_parse]]
+name = "help"
+short_opt = "-h"
+arg = "help"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "cmd_arg"
+is_cmd_arg = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "S"
+short_opt = "-S"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "s"
+short_opt = "-s"
+arg = "search_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "y"
+short_opt = "-y"
+arg = "refresh"
+is_flag = true
+is_repeatable = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "u"
+short_opt = "-u"
+arg = "upgrade_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "R"
+short_opt = "-R"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "Q"
+short_opt = "-Q"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "s"
+short_opt = "-s"
+arg = "query_search_flag"
+is_flag = true
+
+# ## 动作匹配规则
+[action_interfaces.pacman.triggers]
+
+# 全局帮助触发规则（优先级最高）
+[[action_interfaces.pacman.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]
+
+# Sync 操作组 (-S 相关) - 支持重复选项
+[[action_interfaces.pacman.triggers.rules]]
+name = "sync_operations"
+condition = { params = [{ name = "S" }] }
+trigger = [
+    # 强制刷新升级：两个 y 参数
+    { params = [{ name = "y", repeat = 2 }, { name = "u" }], action = "force_upgrade" },
+    # 强制更新：两个 y 参数
+    { params = [{ name = "y", repeat = 2 }], action = "force_update" },
+    # 正常升级：一个 y 参数 + u 参数
+    { params = [{ name = "y" }, { name = "u" }], action = "upgrade" },
+    # 正常更新：一个 y 参数
+    { params = [{ name = "y" }], action = "update" },
+    # 搜索：s 参数
+    { params = [{ name = "s" }], action = "search" },
+    # 默认：安装
+    { params = [], action = "install" }
+]
+
+# Remove 操作组 (-R 相关)
+[[action_interfaces.pacman.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "R" }] }
+trigger = [
+    { params = [], action = "remove" }
+]
+
+# Query 操作组 (-Q 相关)
+[[action_interfaces.pacman.triggers.rules]]
+name = "query_operations"
+condition = { params = [{ name = "Q" }] }
+trigger = [
+    { params = [{ name = "s" }], action = "search" },
+    { params = [], action = "search" }
+]
+
+# 没有指定 arg 时（优先级最低）
+[[action_interfaces.pacman.triggers.rules]]
+name = "no_arg"
+condition = { params = [] }
+trigger = [
+    { params = [], action = "install" }
+]
+
+# === APT 命令的参数解析与动作匹配规则 ===
+# ## 参数解析
+[action_interfaces.apt.args]
+arg_parser = "argparse"
+
+# APT 全局帮助参数
+[[action_interfaces.apt.args.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# APT 子命令
+[[action_interfaces.apt.args.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.apt.args.arg_parse]]
+name = "remove"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.apt.args.arg_parse]]
+name = "update"
+is_sub_cmd = true
+
+[[action_interfaces.apt.args.arg_parse.sub_args]]
+name = "refresh_all"
+long_opt = "--refresh-all"
+arg = "refresh_all_flag"
+is_flag = true
+
+[[action_interfaces.apt.args.arg_parse]]
+name = "upgrade"
+is_sub_cmd = true
+
+[[action_interfaces.apt.args.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+# ## 动作匹配规则
+[action_interfaces.apt.triggers]
+
+# APT 操作组
+[[action_interfaces.apt.triggers.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install" }
+]
+
+[[action_interfaces.apt.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "remove", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove" }
+]
+
+[[action_interfaces.apt.triggers.rules]]
+name = "update_operations"
+condition = { params = [{ name = "update", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "refresh_all" }], action = "force_update" },
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.apt.triggers.rules]]
+name = "upgrade_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "upgrade" }
+]
+
+[[action_interfaces.apt.triggers.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search" }
+]
+
+# APT 帮助触发规则
+[[action_interfaces.apt.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]
+
+# === 全局配置 ===
+[config]
+default_target_action = "pacman"
