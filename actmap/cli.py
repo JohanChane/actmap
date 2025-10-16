@@ -15,10 +15,11 @@ from pathlib import Path
 @click.command(context_settings=dict(ignore_unknown_options=True))
 @click.argument('command', nargs=-1, type=click.UNPROCESSED)
 @click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
-@click.option('-t', '--target', help='目标包管理器')
+@click.option('-t', '--target', help='目标包管理器 (apt/pacman)')
 @click.option('--config', help='配置文件路径')
+@click.option('--output-actmap', nargs=2, help='输出配置的映射关系，例如: --output-actmap pacman apt')
 @click.pass_context
-def map(ctx, command, debug_mode, target, config):
+def map(ctx, command, debug_mode, target, config, output_actmap):
     """映射命令到对应的操作
     
     使用示例:
@@ -26,6 +27,7 @@ def map(ctx, command, debug_mode, target, config):
         actmap map apt install vim git
         actmap -t apt --debug map -- pacman -Syu
         actmap -t pacman map apt search python
+        actmap map --output-actmap pacman apt  # 输出映射配置
     """
     # 从上下文获取选项，优先级：子命令选项 > 全局选项
     debug_mode = debug_mode or ctx.obj.get('debug_mode', False)
@@ -40,6 +42,13 @@ def map(ctx, command, debug_mode, target, config):
     debug(f"调试模式: {debug_mode}")
     debug(f"目标包管理器: {target}")
     debug(f"配置文件: {config}")
+    debug(f"输出映射: {output_actmap}")
+    
+    # 处理 --output-actmap 选项
+    if output_actmap:
+        source_interface, target_interface = output_actmap
+        _output_actmap_mappings(source_interface, target_interface, config, debug_mode)
+        return
     
     try:
         # 主要业务逻辑
@@ -60,7 +69,7 @@ def map(ctx, command, debug_mode, target, config):
             # 默认使用 XDG 配置目录
             xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
             config_path = xdg_config_home
-        
+
         actmap = ActMap(config_path)
         actmap.set_debug(debug_mode)
         
@@ -91,12 +100,9 @@ def map(ctx, command, debug_mode, target, config):
             config_data = actmap.config
             target_interface = config_data.get('config', {}).get('default_target_action', 'pacman')
         
-        # 检查目标包管理器是否在配置文件中定义
-        available_interfaces = list(actmap.config.get('action_interfaces', {}).keys())
-        if target_interface not in available_interfaces:
-            error(f"目标包管理器 '{target_interface}' 在配置文件中未定义")
-            error(f"配置文件中定义的包管理器: {', '.join(available_interfaces)}")
-            fatal("请使用配置文件中定义的包管理器")
+        if target_interface not in ['apt', 'pacman']:
+            error(f"不支持的目标包管理器: {target_interface}")
+            fatal("目标包管理器必须是 'apt' 或 'pacman'")
         
         if debug_mode:
             progress("正在解析命令...")
@@ -148,9 +154,82 @@ def map(ctx, command, debug_mode, target, config):
         fatal("程序异常退出")
 
 
+def _output_actmap_mappings(source_interface, target_interface, config_path, debug_mode):
+    """输出配置的映射关系"""
+    try:
+        # 使用 ActMap 加载配置
+        if config_path:
+            config_path = Path(config_path)
+        else:
+            # 默认使用 XDG 配置目录
+            xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
+            config_path = xdg_config_home
+
+        actmap = ActMap(config_path)
+        
+        # 获取支持的动作
+        actions = actmap.get_supported_actions()
+        
+        info(f"📋 映射配置: {source_interface} → {target_interface}")
+        print("=" * 80)
+        
+        # 表头
+        print(f"{'状态':<4} {'动作':<15} {'源命令':<25} {'目标命令':<30}")
+        print("-" * 80)
+        
+        supported_count = 0
+        
+        for action in actions:
+            # 检查源接口是否支持该动作
+            action_config = actmap.config.get('actions', {}).get(action, {})
+            source_supported = source_interface in action_config
+            target_supported = target_interface in action_config
+            
+            # 获取源命令格式
+            if source_supported:
+                source_cmd = action_config.get(source_interface, {}).get('cmd_format', '不支持')
+            else:
+                source_cmd = "不支持"
+            
+            # 获取目标命令格式
+            if target_supported:
+                target_cmd = action_config.get(target_interface, {}).get('cmd_format', '不支持')
+                status = "✅"
+                supported_count += 1
+            else:
+                target_cmd = "不支持"
+                status = "❌"
+            
+            print(f"{status:<4} {action:<15} {source_cmd:<25} {target_cmd:<30}")
+            
+            # 如果是调试模式，显示触发规则
+            if debug_mode:
+                source_config = actmap.config.get('action_interfaces', {}).get(source_interface, {})
+                triggers = source_config.get('triggers', {}).get('rules', [])
+                for rule in triggers:
+                    triggers_list = rule.get('trigger', [])
+                    for trigger in triggers_list:
+                        if trigger.get('action') == action:
+                            condition = rule.get('condition', {})
+                            params = condition.get('params', [])
+                            if params:
+                                param_names = [p.get('name', '?') for p in params]
+                                print(f"   触发条件: {param_names}")
+        
+        print("=" * 80)
+        success(f"共找到 {supported_count}/{len(actions)} 个支持的映射")
+        
+    except Exception as e:
+        error(f"输出映射配置失败: {e}")
+        if debug_mode:
+            import traceback
+            debug_plain("堆栈跟踪:")
+            debug_plain(traceback.format_exc())
+
+
 @click.group()
 @click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
-@click.option('-t', '--target', help='目标包管理器')
+@click.option('-t', '--target', help='目标包管理器 (apt/pacman)')
 @click.option('--config', help='配置文件路径')
 @click.pass_context
 def cli(ctx, debug_mode, target, config):
@@ -163,6 +242,7 @@ def cli(ctx, debug_mode, target, config):
         actmap map apt install vim git
         actmap -t apt --debug map -- pacman -Syu
         actmap -t pacman map apt search python
+        actmap map --output-actmap pacman apt  # 输出映射配置
     """
     # 确保子命令可以访问这些选项
     ctx.ensure_object(dict)
