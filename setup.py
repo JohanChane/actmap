@@ -9,7 +9,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'actmap=main:main',
+            'actmap=actmap.cli:cli',  # 修改这一行
         ],
     },
     python_requires=">=3.7",

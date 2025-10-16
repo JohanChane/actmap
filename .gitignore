@@ -1,1 +1,5 @@
 __pycache__/
+actmap.egg-info/
+build/
+dist/
+.tool-versions
