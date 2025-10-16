@@ -1,0 +1,60 @@
+# 基础包管理器动作定义
+
+# === 通用动作定义 ===
+# ## install
+[actions.install]
+description = "安装软件包"
+args = ["pkgs"]
+
+# ## remove
+[actions.remove]
+description = "卸载软件包"
+args = ["pkgs"]
+
+# ## search
+[actions.search]
+description = "搜索软件包"
+args = ["pkgs"]
+
+# ## update
+[actions.update]
+description = "更新软件包数据库"
+args = []
+
+# ## upgrade
+[actions.upgrade]
+description = "升级所有软件包"
+args = []
+
+# ## force_update
+[actions.force_update]
+description = "强制更新软件包数据库"
+args = []
+
+# ## force_upgrade
+[actions.force_upgrade]
+description = "强制刷新并升级系统"
+args = []
+
+# ## info
+[actions.info]
+description = "显示软件包信息"
+args = ["pkgs"]
+
+# ## list_installed
+[actions.list_installed]
+description = "列出已安装的软件包"
+args = []
+
+# ## clean
+[actions.clean]
+description = "清理缓存"
+args = []
+
+# ## help
+[actions.help]
+description = "显示帮助信息"
+args = []
+
+# === 动作接口定义 ===
+[action_interfaces]

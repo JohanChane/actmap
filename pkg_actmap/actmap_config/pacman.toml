@@ -1,0 +1,163 @@
+# Pacman 包管理器配置
+
+# === Pacman 命令实现 ===
+[actions.install.pacman]
+cmd_format = "pacman -S {pkgs}"
+
+[actions.remove.pacman]
+cmd_format = "pacman -R {pkgs}"
+
+[actions.search.pacman]
+cmd_format = "pacman -Ss {pkgs}"
+
+[actions.update.pacman]
+cmd_format = "pacman -Sy"
+
+[actions.upgrade.pacman]
+cmd_format = "pacman -Syu"
+
+[actions.force_update.pacman]
+cmd_format = "pacman -Syy"
+
+[actions.force_upgrade.pacman]
+cmd_format = "pacman -Syyu"
+
+[actions.info.pacman]
+cmd_format = "pacman -Si {pkgs}"
+
+[actions.list_installed.pacman]
+cmd_format = "pacman -Q"
+
+[actions.clean.pacman]
+cmd_format = "pacman -Sc"
+
+[actions.help.pacman]
+cmd_format = "pacman -h"
+
+# === Pacman 参数解析 ===
+[action_interfaces.pacman.args]
+arg_parser = "getopt"
+
+# 全局参数 -h
+[[action_interfaces.pacman.args.arg_parse]]
+name = "help"
+short_opt = "-h"
+arg = "help"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "cmd_arg"
+is_cmd_arg = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "S"
+short_opt = "-S"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "s"
+short_opt = "-s"
+arg = "search_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "y"
+short_opt = "-y"
+arg = "refresh"
+is_flag = true
+is_repeatable = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "u"
+short_opt = "-u"
+arg = "upgrade_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "i"
+short_opt = "-i"
+arg = "info_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "c"
+short_opt = "-c"
+arg = "clean_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "R"
+short_opt = "-R"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse]]
+name = "Q"
+short_opt = "-Q"
+is_flag = true
+
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "s"
+short_opt = "-s"
+arg = "query_search_flag"
+is_flag = true
+
+# === Pacman 动作触发规则 ===
+[action_interfaces.pacman.triggers]
+
+# 全局帮助触发规则
+[[action_interfaces.pacman.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]
+
+# Sync 操作组 (-S 相关)
+[[action_interfaces.pacman.triggers.rules]]
+name = "sync_operations"
+condition = { params = [{ name = "S" }] }
+trigger = [
+    # 强制刷新升级：两个 y 参数
+    { params = [{ name = "y", repeat = 2 }, { name = "u" }], action = "force_upgrade" },
+    # 强制更新：两个 y 参数
+    { params = [{ name = "y", repeat = 2 }], action = "force_update" },
+    # 正常升级：一个 y 参数 + u 参数
+    { params = [{ name = "y" }, { name = "u" }], action = "upgrade" },
+    # 正常更新：一个 y 参数
+    { params = [{ name = "y" }], action = "update" },
+    # 搜索：s 参数
+    { params = [{ name = "s" }], action = "search" },
+    # 信息：i 参数
+    { params = [{ name = "i" }], action = "info" },
+    # 清理：c 参数
+    { params = [{ name = "c" }], action = "clean" },
+    # 默认：安装
+    { params = [], action = "install" }
+]
+
+# Remove 操作组 (-R 相关)
+[[action_interfaces.pacman.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "R" }] }
+trigger = [
+    { params = [], action = "remove" }
+]
+
+# Query 操作组 (-Q 相关)
+[[action_interfaces.pacman.triggers.rules]]
+name = "query_operations"
+condition = { params = [{ name = "Q" }] }
+trigger = [
+    { params = [{ name = "s" }], action = "search" },
+    { params = [], action = "list_installed" }
+]
+
+# 没有指定 arg 时
+[[action_interfaces.pacman.triggers.rules]]
+name = "no_arg"
+condition = { params = [] }
+trigger = [
+    { params = [], action = "install" }
+]

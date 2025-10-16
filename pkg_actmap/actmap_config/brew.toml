@@ -1,0 +1,160 @@
+# Homebrew 包管理器配置 (macOS)
+
+# === Homebrew 命令实现 ===
+[actions.install.brew]
+cmd_format = "brew install {pkgs}"
+
+[actions.remove.brew]
+cmd_format = "brew uninstall {pkgs}"
+
+[actions.search.brew]
+cmd_format = "brew search {pkgs}"
+
+[actions.update.brew]
+cmd_format = "brew update"
+
+[actions.upgrade.brew]
+cmd_format = "brew upgrade"
+
+[actions.force_update.brew]
+cmd_format = "brew update --force"  # Homebrew 没有专门的强制更新，但可以使用 --force
+
+[actions.force_upgrade.brew]
+cmd_format = "brew update --force && brew upgrade"  # 强制更新并升级
+
+[actions.info.brew]
+cmd_format = "brew info {pkgs}"
+
+[actions.list_installed.brew]
+cmd_format = "brew list"
+
+[actions.clean.brew]
+cmd_format = "brew cleanup"
+
+[actions.help.brew]
+cmd_format = "brew --help"
+
+# === Homebrew 参数解析 ===
+[action_interfaces.brew.args]
+arg_parser = "argparse"
+
+# Homebrew 全局帮助参数
+[[action_interfaces.brew.args.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# Homebrew 子命令
+[[action_interfaces.brew.args.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "update"
+is_sub_cmd = true
+
+[[action_interfaces.brew.args.arg_parse.sub_args]]
+name = "force"
+long_opt = "--force"
+arg = "force_flag"
+is_flag = true
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "upgrade"
+is_sub_cmd = true
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "info"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "list"
+is_sub_cmd = true
+
+[[action_interfaces.brew.args.arg_parse]]
+name = "cleanup"
+is_sub_cmd = true
+
+# === Homebrew 动作触发规则 ===
+[action_interfaces.brew.triggers]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "update_operations"
+condition = { params = [{ name = "update", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "force" }], action = "force_update" },
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "upgrade_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "upgrade" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "info_operations"
+condition = { params = [{ name = "info", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "list_installed" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "cleanup", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.brew.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]

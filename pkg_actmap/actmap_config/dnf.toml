@@ -1,0 +1,169 @@
+# DNF 包管理器配置
+
+# === DNF 命令实现 ===
+[actions.install.dnf]
+cmd_format = "dnf install {pkgs}"
+
+[actions.remove.dnf]
+cmd_format = "dnf remove {pkgs}"
+
+[actions.search.dnf]
+cmd_format = "dnf search {pkgs}"
+
+[actions.update.dnf]
+cmd_format = "dnf check-update"  # dnf 没有专门的 update 命令，check-update 检查可用更新
+
+[actions.upgrade.dnf]
+cmd_format = "dnf upgrade"
+
+[actions.force_update.dnf]
+cmd_format = "dnf clean all && dnf check-update"  # 清理缓存并检查更新
+
+[actions.force_upgrade.dnf]
+cmd_format = "dnf clean all && dnf upgrade"  # 清理缓存并升级
+
+[actions.info.dnf]
+cmd_format = "dnf info {pkgs}"
+
+[actions.list_installed.dnf]
+cmd_format = "dnf list installed"
+
+[actions.clean.dnf]
+cmd_format = "dnf clean all"
+
+[actions.help.dnf]
+cmd_format = "dnf --help"
+
+# === DNF 参数解析 ===
+[action_interfaces.dnf.args]
+arg_parser = "argparse"
+
+# DNF 全局帮助参数
+[[action_interfaces.dnf.args.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# DNF 子命令
+[[action_interfaces.dnf.args.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "remove"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "check-update"
+is_sub_cmd = true
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "upgrade"
+is_sub_cmd = true
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "info"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "list"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.dnf.args.arg_parse.sub_args]]
+name = "installed"
+long_opt = "--installed"
+arg = "installed_only"
+is_flag = true
+
+[[action_interfaces.dnf.args.arg_parse]]
+name = "clean"
+is_sub_cmd = true
+
+[[action_interfaces.dnf.args.arg_parse.sub_args]]
+name = "all"
+long_opt = "--all"
+arg = "clean_all"
+is_flag = true
+
+# === DNF 动作触发规则 ===
+[action_interfaces.dnf.triggers]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "remove", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "update_operations"
+condition = { params = [{ name = "check-update", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "upgrade_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "upgrade" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "info_operations"
+condition = { params = [{ name = "info", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "installed" }], action = "list_installed" },
+    { params = [], action = "search" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "clean", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "all" }], action = "clean" },
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.dnf.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]

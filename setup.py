@@ -9,7 +9,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'actmap=actmap.cli:cli',  # 修改这一行
+            'actmap=actmap.cli:cli',
+            'actmap-generate=pkg_actmap.generate_config:generate_config',
         ],
     },
     python_requires=">=3.7",
