@@ -7,16 +7,20 @@ import tomllib
 import tomli_w
 from pathlib import Path
 import click
+import shutil
 
 
 @click.command()
 @click.option('-o', '--output', required=False, help='输出配置文件路径')
 @click.option('-m', '--actmap', 'actmaps', multiple=True,
               help='要包含的包管理器名称（可多次使用）')
-@click.option('--actmap-config', 'pkg_config_dir', default='actmap_config',
-              show_default=True, help='包管理器配置目录路径')
+@click.option('--actmap-config', 'pkg_config_dir', 
+              default=str(Path(__file__).parent / 'actmap_config'),
+              show_default='pkg_actmap/actmap_config', 
+              help='包管理器配置目录路径')
 @click.option('--list-actmaps', is_flag=True, help='列出所有可用的包管理器')
-def generate_config(output, actmaps, pkg_config_dir, list_actmaps):
+@click.option('--init-config', is_flag=True, help='初始化用户配置目录')
+def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
     """生成包含多个包管理器的完整配置
     
     示例:
@@ -24,7 +28,12 @@ def generate_config(output, actmaps, pkg_config_dir, list_actmaps):
         actmap-generate -o my_config.toml -m pacman -m apt -m dnf
         actmap-generate --actmap-config /custom/path -o config.toml -m pacman
         actmap-generate --list-actmaps
+        actmap-generate --init-config
     """
+    
+    if init_config:
+        init_user_config()
+        return
     
     if list_actmaps:
         available_packages = get_available_packages(pkg_config_dir)
@@ -48,12 +57,7 @@ def generate_config(output, actmaps, pkg_config_dir, list_actmaps):
         raise click.ClickException(f"包管理器不存在: {', '.join(invalid_packages)}\n可用的包管理器: {', '.join(available_packages)}")
     
     output_path = Path(output)
-    
-    # 处理 pkg_config_dir 路径
     pkg_config_path = Path(pkg_config_dir)
-    if not pkg_config_path.is_absolute():
-        # 如果是相对路径，相对于当前脚本的目录
-        pkg_config_path = Path(__file__).parent / pkg_config_dir
     
     # 加载基础配置
     base_path = Path(__file__).parent / "base.toml"
@@ -116,6 +120,48 @@ def get_available_packages(pkg_config_dir: str) -> list:
         packages.append(f.stem)
     
     return sorted(packages)
+
+
+def init_user_config():
+    """初始化用户配置目录"""
+    # 获取 XDG 配置目录
+    xdg_config_home = Path.home() / '.config'
+    actmap_config_dir = xdg_config_home / 'actmap'
+    actmap_pkg_config_dir = actmap_config_dir / 'actmap_config'
+    
+    # 创建目录
+    actmap_config_dir.mkdir(parents=True, exist_ok=True)
+    actmap_pkg_config_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 源目录
+    source_base = Path(__file__).parent / 'base.toml'
+    source_config_dir = Path(__file__).parent / 'actmap_config'
+    
+    # 复制 base.toml
+    if source_base.exists():
+        shutil.copy2(source_base, actmap_config_dir / 'base.toml')
+        click.echo(f"✅ 已复制: base.toml -> {actmap_config_dir / 'base.toml'}")
+    else:
+        click.echo(f"❌ 源文件不存在: {source_base}")
+    
+    # 复制所有包管理器配置
+    if source_config_dir.exists():
+        config_files = list(source_config_dir.glob("*.toml"))
+        for config_file in config_files:
+            shutil.copy2(config_file, actmap_pkg_config_dir / config_file.name)
+            click.echo(f"✅ 已复制: {config_file.name} -> {actmap_pkg_config_dir / config_file.name}")
+        
+        click.echo(f"📦 共复制了 {len(config_files)} 个包管理器配置")
+    else:
+        click.echo(f"❌ 源目录不存在: {source_config_dir}")
+    
+    click.echo(f"🎉 用户配置初始化完成！")
+    click.echo(f"   配置目录: {actmap_config_dir}")
+    click.echo(f"   包管理器配置: {actmap_pkg_config_dir}")
+    click.echo("")
+    click.echo("现在你可以使用:")
+    click.echo(f"  actmap-generate --actmap-config {actmap_pkg_config_dir} -o config.toml -m pacman -m apt")
+    click.echo(f"  actmap --config config.toml map -- apt install vim")
 
 
 if __name__ == '__main__':

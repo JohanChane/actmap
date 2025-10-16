@@ -1,45 +1,50 @@
 #!/usr/bin/env python3
 """
-命令行接口模块
+执行映射后的命令
 """
 
 import click
+import subprocess
+import sys
+from pathlib import Path
+
+# 添加项目根目录到 Python 路径
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from actmap.core.actmap import ActMap
 from actmap.log import (
     set_debug, debug, info, success, error, warning, 
     progress, step, debug_plain, fatal
 )
-from actmap.core.actmap import ActMap
-from pathlib import Path
 
 
-@click.command(context_settings=dict(ignore_unknown_options=True))
+@click.command()
 @click.argument('command', nargs=-1, type=click.UNPROCESSED)
 @click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
 @click.option('-t', '--target', help='目标包管理器')
 @click.option('--config', help='配置文件路径')
-@click.pass_context
-def map(ctx, command, debug_mode, target, config):
-    """映射命令到对应的操作
+@click.option('-i', '--interactive', is_flag=True, help='交互模式，执行前确认')
+@click.option('-f', '--force', is_flag=True, help='强制模式，直接执行不确认')
+def execute(command, debug_mode, target, config, interactive, force):
+    """执行映射后的命令
     
-    使用示例:
-        actmap map -- apt install vim git
-        actmap map apt install vim git
-        actmap -t apt --debug map -- pacman -Syu
-        actmap -t pacman map apt search python
+    示例:
+        actmap-execute -- apt install vim git
+        actmap-execute -i -- pacman -Syu
+        actmap-execute -f -- apt remove vim
+        actmap-execute -t apt -- pacman -S vim
     """
-    # 从上下文获取选项，优先级：子命令选项 > 全局选项
-    debug_mode = debug_mode or ctx.obj.get('debug_mode', False)
-    target = target or ctx.obj.get('target')  # 这里不设置默认值
-    config = config or ctx.obj.get('config')
-    
     # 设置调试模式
     set_debug(debug_mode)
     
-    debug("🚀 开始命令映射")
+    debug("🚀 开始执行命令映射")
     debug(f"接收到的参数: {command}")
     debug(f"调试模式: {debug_mode}")
     debug(f"目标包管理器: {target}")
     debug(f"配置文件: {config}")
+    debug(f"交互模式: {interactive}")
+    debug(f"强制模式: {force}")
     
     try:
         # 主要业务逻辑
@@ -50,17 +55,10 @@ def map(ctx, command, debug_mode, target, config):
         cmd_str = ' '.join(command)
         cmd_parts = list(command)
         
-        if debug_mode:
-            info(f"处理命令: {cmd_str}")
+        info(f"处理命令: {cmd_str}")
         
-        # 使用 ActMap 进行实际映射 - 默认使用 XDG 配置
-        if config:
-            config_path = Path(config)
-        else:
-            # 默认使用 XDG 配置目录
-            xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
-            config_path = xdg_config_home
-        
+        # 使用 ActMap 进行实际映射
+        config_path = Path(config) if config else Path("config.toml")
         actmap = ActMap(config_path)
         actmap.set_debug(debug_mode)
         
@@ -117,7 +115,6 @@ def map(ctx, command, debug_mode, target, config):
                 success(f"找到 {action} 操作")
             else:
                 warning("未找到匹配的操作")
-                info("执行普通命令")
         
         # 执行映射
         if debug_mode:
@@ -125,21 +122,34 @@ def map(ctx, command, debug_mode, target, config):
         
         mapped_command = actmap.map_command(source_interface, target_interface, action, parse_result)
         
-        if mapped_command:
-            # 只输出映射后的命令
-            print(mapped_command)
-            if debug_mode:
-                success("操作执行成功")
-        else:
-            if debug_mode:
-                error("无法映射命令")
-                fatal("映射失败")
-            else:
-                # 在非调试模式下，如果映射失败，静默退出
+        if not mapped_command:
+            error("无法映射命令")
+            fatal("映射失败")
+        
+        info(f"映射后的命令: {mapped_command}")
+        
+        # 判断是否需要确认
+        need_confirmation = _need_confirmation(action, interactive, force)
+        
+        if need_confirmation:
+            if not _confirm_execution(mapped_command):
+                info("用户取消执行")
                 return
         
+        # 执行命令
+        step("执行命令...")
+        try:
+            result = subprocess.run(mapped_command, shell=True, check=True)
+            success("命令执行成功")
+        except subprocess.CalledProcessError as e:
+            error(f"命令执行失败，退出码: {e.returncode}")
+            sys.exit(e.returncode)
+        except KeyboardInterrupt:
+            error("命令被用户中断")
+            sys.exit(130)
+        
     except Exception as e:
-        error(f"命令映射失败: {e}")
+        error(f"命令执行失败: {e}")
         debug("详细错误信息:", str(e))
         if debug_mode:
             import traceback
@@ -148,32 +158,37 @@ def map(ctx, command, debug_mode, target, config):
         fatal("程序异常退出")
 
 
-@click.group()
-@click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
-@click.option('-t', '--target', help='目标包管理器')
-@click.option('--config', help='配置文件路径')
-@click.pass_context
-def cli(ctx, debug_mode, target, config):
-    """ActMap - 智能命令映射工具
+def _need_confirmation(action: str, interactive: bool, force: bool) -> bool:
+    """判断是否需要确认执行"""
+    # 强制模式：直接执行
+    if force:
+        return False
     
-    将一种包管理器的命令映射到另一种包管理器。
+    # 交互模式：总是确认
+    if interactive:
+        return True
     
-    示例:
-        actmap map -- apt install vim git
-        actmap map apt install vim git
-        actmap -t apt --debug map -- pacman -Syu
-        actmap -t pacman map apt search python
-    """
-    # 确保子命令可以访问这些选项
-    ctx.ensure_object(dict)
-    ctx.obj['debug_mode'] = debug_mode
-    ctx.obj['target'] = target
-    ctx.obj['config'] = config
+    # 安全操作：直接执行
+    safe_actions = ['search', 'info', 'help', 'list_installed']
+    if action in safe_actions:
+        return False
+    
+    # 其他操作：需要确认
+    return True
 
 
-# 添加子命令
-cli.add_command(map)
+def _confirm_execution(command: str) -> bool:
+    """确认是否执行命令"""
+    warning(f"即将执行命令: {command}")
+    click.echo("⚠️  这是一个有影响的操作，确认执行吗？")
+    
+    try:
+        response = input("请输入 'y' 确认执行，或任意键取消: ").strip().lower()
+        return response == 'y'
+    except KeyboardInterrupt:
+        click.echo("\n取消执行")
+        return False
 
 
 if __name__ == '__main__':
-    cli()
+    execute()

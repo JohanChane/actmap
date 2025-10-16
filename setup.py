@@ -11,6 +11,7 @@ setup(
         'console_scripts': [
             'actmap=actmap.cli:cli',
             'actmap-generate=pkg_actmap.generate_config:generate_config',
+            'actmap-execute=pkg_actmap.execute_runner:execute',
         ],
     },
     python_requires=">=3.7",
