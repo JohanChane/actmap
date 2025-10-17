@@ -1,0 +1,226 @@
+# Chocolatey 包管理器配置
+
+# === Chocolatey 命令实现 ===
+[actions.install.chocolatey]
+cmd_format = "choco install {pkgs}"
+
+[actions.remove.chocolatey]
+cmd_format = "choco uninstall {pkgs}"
+
+[actions.search.chocolatey]
+cmd_format = "choco search {pkgs}"
+
+[actions.update.chocolatey]
+cmd_format = "choco upgrade all --noop"
+
+[actions.upgrade.chocolatey]
+cmd_format = "choco upgrade all"
+
+[actions.force_update.chocolatey]
+cmd_format = "choco upgrade all --force"
+
+[actions.force_upgrade.chocolatey]
+cmd_format = "choco upgrade all --force"
+
+[actions.info.chocolatey]
+cmd_format = "choco info {pkgs}"
+
+[actions.list_installed.chocolatey]
+cmd_format = "choco list --local-only"
+
+[actions.clean.chocolatey]
+cmd_format = "choco optimize --reduce-nupkg-only"
+
+[actions.help.chocolatey]
+cmd_format = "choco --help"
+
+[actions.list_files.chocolatey]
+cmd_format = "choco list --verbose {pkgs}"
+
+[actions.find_file_owner.chocolatey]
+cmd_format = "where {files}"
+
+[actions.find_file_owner_remote.chocolatey]
+cmd_format = "choco search {files}"
+
+[actions.download_source.chocolatey]
+cmd_format = "choco download {pkgs}"
+
+# === Chocolatey 参数解析 ===
+[action_interfaces.chocolatey.args.chocolatey_command]
+cmd_name = "choco"
+arg_parser = "argparse"
+
+# Chocolatey 全局帮助参数
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# Chocolatey 子命令
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "upgrade"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse.sub_args]]
+name = "force"
+long_opt = "--force"
+arg = "force_flag"
+is_flag = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse.sub_args]]
+name = "all"
+long_opt = "all"
+arg = "upgrade_all"
+is_flag = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse.sub_args]]
+name = "noop"
+long_opt = "--noop"
+arg = "noop_flag"
+is_flag = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "info"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "list"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse.sub_args]]
+name = "local_only"
+long_opt = "--local-only"
+arg = "local_only_flag"
+is_flag = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse.sub_args]]
+name = "verbose"
+long_opt = "--verbose"
+arg = "verbose_flag"
+is_flag = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "optimize"
+is_sub_cmd = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse.sub_args]]
+name = "reduce_nupkg_only"
+long_opt = "--reduce-nupkg-only"
+arg = "reduce_nupkg_flag"
+is_flag = true
+
+[[action_interfaces.chocolatey.args.chocolatey_command.arg_parse]]
+name = "download"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+# === Chocolatey 动作触发规则 ===
+[action_interfaces.chocolatey.triggers.chocolatey_command]
+cmd_name = "choco"
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "update_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }, { name = "all" }, { name = "noop" }] }
+trigger = [
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "upgrade_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }, { name = "all" }] }
+trigger = [
+    { params = [{ name = "force" }], action = "force_upgrade" },
+    { params = [], action = "upgrade" }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "info_operations"
+condition = { params = [{ name = "info", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "local_only" }], action = "list_installed" },
+    { params = [{ name = "verbose" }], action = "list_files", arg_map = { targets = "pkgs" } },
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "optimize", is_sub_cmd = true }, { name = "reduce_nupkg_only" }] }
+trigger = [
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "find_file_owner_remote_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "find_file_owner_remote", arg_map = { targets = "files" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "download", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.chocolatey.triggers.chocolatey_command.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]

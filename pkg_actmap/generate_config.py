@@ -25,11 +25,11 @@ def generate_config(output, use_actmaps, add_actmaps, pkg_config_dir, list_actma
 
     \b
     示例:
-        actmap-generate --use-actmaps pacman,apt        # 创建包含 pacman 和 apt 的配置
-        actmap-generate --add-actmaps brew              # 添加 brew 到现有配置
-        actmap-generate --use-actmaps pacman,apt,brew   # 创建包含多个包管理器的配置
-        actmap-generate --list-actmaps                  # 列出可用包管理器
-        actmap-generate --init-config                   # 初始化配置目录
+        actmap-generate --use-actmaps pacman,apt,dnf        # 创建包含多个包管理器的配置
+        actmap-generate --use-actmaps pacman,apt,brew,scoop,winget  # 创建跨平台配置
+        actmap-generate --add-actmaps brew,zypper           # 添加包管理器到现有配置
+        actmap-generate --list-actmaps                      # 列出可用包管理器
+        actmap-generate --init-config                       # 初始化配置目录
     """
 
     if init_config:
@@ -312,7 +312,7 @@ def init_user_config():
     except Exception as e:
         click.echo(f"⚠️  生成默认配置文件失败: {e}")
 
-    click.echo(f"🎉 用户配置初始化完成！")
+    click.echo("🎉 用户配置初始化完成！")
     click.echo(f"   配置目录: {actmap_config_dir}")
     click.echo(f"   包管理器配置: {actmap_pkg_config_dir}")
     click.echo(f"   默认配置文件: {default_config_path}")
@@ -325,15 +325,16 @@ def init_user_config():
     click.echo("  actmap map -- apt install vim")
     click.echo("  actmap-execute -- apt search python")
     click.echo("")
-    click.echo("\n📦 可用包管理器:")
+    click.echo("📦 可用包管理器:")
     click.echo("  使用 'actmap-generate --list-actmaps' 查看完整列表")
     
     click.echo("\n🎯 下一步操作:")
     click.echo("  1. 查看可用包管理器: actmap-generate --list-actmaps")
-    click.echo("  2. 添加更多包管理器: actmap-generate -o custom.toml -m apt -m pacman -m brew")
-    click.echo("  3. 测试命令映射: actmap map -- apt install vim")
-    click.echo("  4. 直接执行命令: actmap-execute -y -- pacman -S git")
+    click.echo("  2. 创建完整配置: actmap-generate --use-actmaps pacman,apt,dnf,brew,zypper,scoop,winget,chocolatey")
+    click.echo("  3. 添加特定包管理器: actmap-generate --add-actmaps brew,scoop,winget")
+    click.echo("  4. 测试命令映射: actmap map -- apt install vim")
+    click.echo("  5. 直接执行命令: actmap-execute -i -- pacman -S git")
 
-    
+
 if __name__ == '__main__':
     generate_config()

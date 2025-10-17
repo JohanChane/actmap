@@ -1,0 +1,222 @@
+# Winget 包管理器配置
+
+# === Winget 命令实现 ===
+[actions.install.winget]
+cmd_format = "winget install {pkgs}"
+
+[actions.remove.winget]
+cmd_format = "winget uninstall {pkgs}"
+
+[actions.search.winget]
+cmd_format = "winget search {pkgs}"
+
+[actions.update.winget]
+cmd_format = "winget source update"
+
+[actions.upgrade.winget]
+cmd_format = "winget upgrade --all"
+
+[actions.force_update.winget]
+cmd_format = "winget source update --force"
+
+[actions.force_upgrade.winget]
+cmd_format = "winget upgrade --all --force"
+
+[actions.info.winget]
+cmd_format = "winget show {pkgs}"
+
+[actions.list_installed.winget]
+cmd_format = "winget list"
+
+[actions.clean.winget]
+cmd_format = "winget source reset --force"
+
+[actions.help.winget]
+cmd_format = "winget --help"
+
+[actions.list_files.winget]
+cmd_format = "winget show --files {pkgs}"
+
+[actions.find_file_owner.winget]
+cmd_format = "where {files}"
+
+[actions.find_file_owner_remote.winget]
+cmd_format = "winget search {files}"
+
+[actions.download_source.winget]
+cmd_format = "winget download {pkgs}"
+
+# === Winget 参数解析 ===
+[action_interfaces.winget.args.winget_command]
+cmd_name = "winget"
+arg_parser = "argparse"
+
+# Winget 全局帮助参数
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# Winget 子命令
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "source"
+is_sub_cmd = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse.sub_args]]
+name = "update"
+long_opt = "update"
+arg = "source_update"
+is_flag = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse.sub_args]]
+name = "reset"
+long_opt = "reset"
+arg = "source_reset"
+is_flag = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse.sub_args]]
+name = "force"
+long_opt = "--force"
+arg = "force_flag"
+is_flag = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "upgrade"
+is_sub_cmd = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse.sub_args]]
+name = "all"
+long_opt = "--all"
+arg = "upgrade_all"
+is_flag = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "show"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.winget.args.winget_command.arg_parse.sub_args]]
+name = "files"
+long_opt = "--files"
+arg = "show_files_flag"
+is_flag = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "list"
+is_sub_cmd = true
+
+[[action_interfaces.winget.args.winget_command.arg_parse]]
+name = "download"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+# === Winget 动作触发规则 ===
+[action_interfaces.winget.triggers.winget_command]
+cmd_name = "winget"
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "update_operations"
+condition = { params = [{ name = "source", is_sub_cmd = true }, { name = "update" }] }
+trigger = [
+    { params = [{ name = "force" }], action = "force_update" },
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "upgrade_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }, { name = "all" }] }
+trigger = [
+    { params = [{ name = "force" }], action = "force_upgrade" },
+    { params = [], action = "upgrade" }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "info_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "list_files_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }, { name = "files" }] }
+trigger = [
+    { params = [], action = "list_files", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "list_installed" }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "source", is_sub_cmd = true }, { name = "reset" }] }
+trigger = [
+    { params = [{ name = "force" }], action = "clean" }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "find_file_owner_remote_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "find_file_owner_remote", arg_map = { targets = "files" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "download", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.winget.triggers.winget_command.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]
