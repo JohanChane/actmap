@@ -1,0 +1,134 @@
+# Windows Package Manager (winget) 配置
+
+[actions.install.winget]
+cmd_format = "winget install {pkgs}"
+
+[actions.remove.winget]
+cmd_format = "winget uninstall {pkgs}"
+
+[actions.search.winget]
+cmd_format = "winget search {pkgs}"
+
+[actions.update.winget]
+cmd_format = "winget upgrade"  # 列出可用更新
+
+[actions.upgrade.winget]
+cmd_format = "winget upgrade --all"  # 升级所有包
+
+[actions.force_update.winget]
+cmd_format = "winget upgrade --all --force"
+
+[actions.force_upgrade.winget]
+cmd_format = "winget upgrade --all --force"
+
+[actions.info.winget]
+cmd_format = "winget show {pkgs}"
+
+[actions.list_installed.winget]
+cmd_format = "winget list"
+
+[actions.clean.winget]
+cmd_format = "winget upgrade --all --clean"  # 清理临时文件
+
+[actions.help.winget]
+cmd_format = "winget --help"
+
+[action_interfaces.winget.args]
+arg_parser = "argparse"
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "upgrade"
+is_sub_cmd = true
+
+[[action_interfaces.winget.args.arg_parse.sub_args]]
+name = "all"
+long_opt = "--all"
+arg = "upgrade_all"
+is_flag = true
+
+[[action_interfaces.winget.args.arg_parse.sub_args]]
+name = "force"
+long_opt = "--force"
+arg = "force_flag"
+is_flag = true
+
+[[action_interfaces.winget.args.arg_parse.sub_args]]
+name = "clean"
+long_opt = "--clean"
+arg = "clean_flag"
+is_flag = true
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "show"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.winget.args.arg_parse]]
+name = "list"
+is_sub_cmd = true
+
+[action_interfaces.winget.triggers]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "install" }]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "remove" }]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "search" }]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "update_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "all" }, { name = "force" }], action = "force_upgrade" },
+    { params = [{ name = "all" }], action = "upgrade" },
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "info_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "info" }]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "list_installed" }]
+
+[[action_interfaces.winget.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [{ params = [], action = "help" }]
