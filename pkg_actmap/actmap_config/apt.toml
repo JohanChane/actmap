@@ -34,6 +34,9 @@ cmd_format = "apt autoclean"
 [actions.help.apt]
 cmd_format = "apt --help"
 
+[actions.list_files.apt]
+cmd_format = "dpkg -L {pkgs}"
+
 # === APT 参数解析 ===
 [action_interfaces.apt.args]
 arg_parser = "argparse"

@@ -1,0 +1,124 @@
+# pip 包管理器配置 (Python)
+
+[actions.install.pip]
+cmd_format = "pip install {pkgs}"
+
+[actions.remove.pip]
+cmd_format = "pip uninstall {pkgs}"
+
+[actions.search.pip]
+cmd_format = "pip search {pkgs}"
+
+[actions.list_installed.pip]
+cmd_format = "pip list"
+
+[actions.info.pip]
+cmd_format = "pip show {pkgs}"
+
+[actions.freeze.pip]
+cmd_format = "pip freeze"
+
+[actions.help.pip]
+cmd_format = "pip --help"
+
+[actions.list_files.pip]
+cmd_format = "pip show -f {pkgs}"
+
+[action_interfaces.pip.args]
+arg_parser = "argparse"
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "list"
+is_sub_cmd = true
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "show"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "freeze"
+is_sub_cmd = true
+
+[[action_interfaces.pip.args.arg_parse]]
+name = "show"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.pip.args.arg_parse.sub_args]]
+name = "files"
+short_opt = "-f"
+long_opt = "--files"
+arg = "show_files"
+is_flag = true
+
+[action_interfaces.pip.triggers]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "install" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "remove" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "search" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "list_installed" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "info_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "info" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "freeze_operations"
+condition = { params = [{ name = "freeze", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "freeze" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [{ params = [], action = "help" }]
+
+[[action_interfaces.pip.triggers.rules]]
+name = "list_files_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "files" }], action = "list_files" },
+    { params = [], action = "info" }  # 没有 -f 参数时仍显示包信息
+]

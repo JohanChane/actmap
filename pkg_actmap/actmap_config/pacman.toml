@@ -34,6 +34,15 @@ cmd_format = "pacman -Sc"
 [actions.help.pacman]
 cmd_format = "pacman -h"
 
+[actions.list_files.pacman]
+cmd_format = "pacman -Ql {pkgs}"
+
+[actions.find_file_owner.pacman]
+cmd_format = "pacman -Qo {files}"
+
+[actions.find_file_owner_regex.pacman]
+cmd_format = "pacman -Fx {pattern}"
+
 # === Pacman 参数解析 ===
 [action_interfaces.pacman.args]
 arg_parser = "getopt"
@@ -103,6 +112,12 @@ short_opt = "-s"
 arg = "query_search_flag"
 is_flag = true
 
+[[action_interfaces.pacman.args.arg_parse.sub_args]]
+name = "l"
+short_opt = "-l"
+arg = "list_files_flag"
+is_flag = true
+
 # === Pacman 动作触发规则 ===
 [action_interfaces.pacman.triggers]
 
@@ -151,6 +166,7 @@ name = "query_operations"
 condition = { params = [{ name = "Q" }] }
 trigger = [
     { params = [{ name = "s" }], action = "search" },
+    { params = [{ name = "l" }], action = "list_files" },
     { params = [], action = "list_installed" }
 ]
 

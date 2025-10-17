@@ -205,9 +205,11 @@ def map(ctx, command):
             config_data = actmap.config
             target_interface = config_data.get('config', {}).get('default_target_action', 'pacman')
         
-        if target_interface not in ['apt', 'pacman']:
+        available_interfaces = actmap.get_supported_interfaces()
+        if target_interface not in available_interfaces:
             error(f"不支持的目标包管理器: {target_interface}")
-            fatal("目标包管理器必须是 'apt' 或 'pacman'")
+            error(f"配置文件中定义的包管理器: {', '.join(available_interfaces)}")
+            fatal("请使用配置文件中定义的包管理器")
         
         if debug_mode:
             progress("正在解析命令...")

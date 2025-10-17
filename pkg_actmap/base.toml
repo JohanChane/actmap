@@ -56,5 +56,40 @@ args = []
 description = "显示帮助信息"
 args = []
 
+# ## list_files (列出包文件)
+[actions.list_files]
+description = "列出包的文件"
+args = ["pkgs"]
+
+# ## freeze (语言包管理器特有)
+[actions.freeze]
+description = "冻结依赖版本"
+args = []
+
+# ## build (Cargo/Rust 特有)
+[actions.build]
+description = "构建项目"
+args = []
+
+# ## run (Cargo/Rust 特有)
+[actions.run]
+description = "运行项目"
+args = []
+
+# ## test (Cargo/Rust 特有)
+[actions.test]
+description = "运行测试"
+args = []
+
+# ## check (Cargo/Rust 特有)
+[actions.check]
+description = "检查代码"
+args = []
+
+# ## doc (Cargo/Rust 特有)
+[actions.doc]
+description = "生成文档"
+args = []
+
 # === 动作接口定义 ===
 [action_interfaces]

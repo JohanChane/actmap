@@ -34,6 +34,9 @@ cmd_format = "dnf clean all"
 [actions.help.dnf]
 cmd_format = "dnf --help"
 
+[actions.list_files.dnf]
+cmd_format = "rpm -ql {pkgs}"
+
 # === DNF 参数解析 ===
 [action_interfaces.dnf.args]
 arg_parser = "argparse"
