@@ -12,24 +12,24 @@ import shutil
 
 @click.command()
 @click.option('-o', '--output', required=False, help='输出配置文件路径')
-@click.option('-m', '--actmap', 'actmaps', multiple=True,
-              help='要包含的包管理器名称（可多次使用）')
+@click.option('--use-actmaps', help='使用指定的包管理器创建或更新配置（逗号分隔）')
+@click.option('--add-actmaps', help='添加包管理器到现有配置（逗号分隔）')
 @click.option('--actmap-config', 'pkg_config_dir',
               default=str(Path.home() / '.config' / 'actmap' / 'actmap_config'),
               show_default='~/.config/actmap/actmap_config',
               help='包管理器配置目录路径')
 @click.option('--list-actmaps', is_flag=True, help='列出所有可用的包管理器')
 @click.option('--init-config', is_flag=True, help='初始化用户配置目录')
-def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
+def generate_config(output, use_actmaps, add_actmaps, pkg_config_dir, list_actmaps, init_config):
     """生成包含多个包管理器的完整配置
 
     \b
     示例:
-        actmap-generate -o config.toml -m pacman -m apt
-        actmap-generate -o my_config.toml -m pacman -m apt -m dnf
-        actmap-generate --actmap-config /custom/path -o config.toml -m pacman
-        actmap-generate --list-actmaps
-        actmap-generate --init-config
+        actmap-generate --use-actmaps pacman,apt        # 创建包含 pacman 和 apt 的配置
+        actmap-generate --add-actmaps brew              # 添加 brew 到现有配置
+        actmap-generate --use-actmaps pacman,apt,brew   # 创建包含多个包管理器的配置
+        actmap-generate --list-actmaps                  # 列出可用包管理器
+        actmap-generate --init-config                   # 初始化配置目录
     """
 
     if init_config:
@@ -43,17 +43,30 @@ def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
             print(f"  - {pkg}")
         return
 
-    # 如果没有指定输出路径，报错
+    # 如果没有指定输出路径，使用默认配置路径
     if not output:
-        raise click.ClickException("必须指定输出配置文件路径，使用 -o/--output 选项")
+        output = str(Path.home() / '.config' / 'actmap' / 'config.toml')
 
-    # 如果没有指定包管理器，报错
-    if not actmaps:
-        raise click.ClickException("必须指定至少一个包管理器，使用 -m/--actmap 选项")
+    # 解析包管理器列表
+    actmaps_to_process = []
+    operation = "create"  # 操作类型: create 或 add
+
+    if use_actmaps:
+        actmaps_to_process = [pkg.strip() for pkg in use_actmaps.split(',') if pkg.strip()]
+        operation = "create"
+    elif add_actmaps:
+        actmaps_to_process = [pkg.strip() for pkg in add_actmaps.split(',') if pkg.strip()]
+        operation = "add"
+    else:
+        raise click.ClickException("必须指定 --use-actmaps 或 --add-actmaps 选项")
+
+    # 检查是否提供了包管理器
+    if not actmaps_to_process:
+        raise click.ClickException("必须指定至少一个包管理器")
 
     # 验证包管理器是否存在
     available_packages = get_available_packages(pkg_config_dir)
-    invalid_packages = [pkg for pkg in actmaps if pkg not in available_packages]
+    invalid_packages = [pkg for pkg in actmaps_to_process if pkg not in available_packages]
     if invalid_packages:
         raise click.ClickException(f"包管理器不存在: {', '.join(invalid_packages)}\n可用的包管理器: {', '.join(available_packages)}")
 
@@ -69,8 +82,25 @@ def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
     if 'action_interfaces' not in config:
         config['action_interfaces'] = {}
 
+    # 记录初始的接口数量
+    initial_interface_count = len(config.get('action_interfaces', {}))
+
+    # 如果是添加操作，先加载现有配置
+    if operation == "add" and output_path.exists():
+        try:
+            with open(output_path, 'rb') as f:
+                existing_config = tomllib.load(f)
+                # 合并现有配置
+                config = existing_config
+                initial_interface_count = len(config.get('action_interfaces', {}))
+        except Exception as e:
+            click.echo(f"⚠️  无法读取现有配置，将创建新配置: {e}")
+
+    # 记录实际添加的包管理器（用于去重）
+    actually_added_packages = []
+
     # 合并所有指定的包管理器配置
-    for package in actmaps:
+    for package in actmaps_to_process:
         package_path = pkg_config_path / f"{package}.toml"
         if not package_path.exists():
             raise click.ClickException(f"包管理器配置文件不存在: {package_path}")
@@ -78,21 +108,54 @@ def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
         with open(package_path, 'rb') as f:
             package_config = tomllib.load(f)
 
+        # 检查这个包管理器是否已经存在
+        package_interface_name = package  # 包管理器名称通常就是接口名称
+        if package_interface_name in config.get('action_interfaces', {}):
+            if operation == "add":
+                click.echo(f"⚠️  包管理器 {package} 已存在，跳过重复添加")
+                continue
+            else:
+                # 对于创建操作，覆盖现有配置
+                click.echo(f"🔄  更新包管理器 {package} 的配置")
+
         # 合并 actions
         for action, action_config in package_config.get('actions', {}).items():
             if action in config['actions']:
-                config['actions'][action].update(action_config)
+                # 只添加新包管理器的配置，避免覆盖现有配置
+                for pkg_name, pkg_config in action_config.items():
+                    if pkg_name not in config['actions'][action]:
+                        config['actions'][action][pkg_name] = pkg_config
             else:
                 config['actions'][action] = action_config
 
         # 合并 action_interfaces
         if 'action_interfaces' in package_config:
-            config['action_interfaces'].update(package_config['action_interfaces'])
+            for iface_name, iface_config in package_config['action_interfaces'].items():
+                if iface_name not in config['action_interfaces']:
+                    config['action_interfaces'][iface_name] = iface_config
+                elif operation == "create":
+                    # 对于创建操作，更新现有接口配置
+                    config['action_interfaces'][iface_name] = iface_config
+
+        actually_added_packages.append(package)
+
+    # 如果没有实际添加任何包管理器，显示警告
+    if not actually_added_packages and operation == "add":
+        click.echo("⚠️  没有添加新的包管理器（所有指定的包管理器都已存在）")
+        return
 
     # 设置默认目标（使用第一个包管理器）
-    config['config'] = {
-        'default_target_action': actmaps[0]
-    }
+    if actually_added_packages:
+        # 对于添加操作，保持原有的默认目标
+        if operation == "create":
+            config['config'] = {
+                'default_target_action': actually_added_packages[0]
+            }
+        elif operation == "add" and 'config' not in config:
+            # 如果添加操作且没有默认配置，设置第一个包管理器为默认
+            config['config'] = {
+                'default_target_action': actually_added_packages[0]
+            }
 
     # 确保输出目录存在
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -101,14 +164,27 @@ def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
     with open(output_path, 'wb') as f:
         tomli_w.dump(config, f)
 
-    click.echo(f"✅ 已生成配置文件: {output_path}")
-    click.echo(f"   包含的包管理器: {', '.join(actmaps)}")
-    click.echo(f"   默认目标包管理器: {actmaps[0]}")
+    # 计算接口数量变化
+    final_interface_count = len(config.get('action_interfaces', {}))
+    interface_count_change = final_interface_count - initial_interface_count
+
+    if operation == "create":
+        click.echo(f"✅ 已创建配置文件: {output_path}")
+    else:
+        click.echo(f"✅ 已更新配置文件: {output_path}")
+        
+    click.echo(f"   包含的包管理器: {', '.join(actually_added_packages)}")
+    
+    # 显示默认目标
+    default_target = config.get('config', {}).get('default_target_action', '未设置')
+    click.echo(f"   默认目标包管理器: {default_target}")
+    
     click.echo(f"   支持的动作: {len(config.get('actions', {}))} 个")
-    click.echo(f"   支持的接口: {len(config.get('action_interfaces', {}))} 个")
-    click.echo(f"   配置目录: {pkg_config_path}")
-
-
+    click.echo(f"   支持的接口: {final_interface_count} 个")
+    
+    if operation == "add" and interface_count_change > 0:
+        click.echo(f"   新增接口: {interface_count_change} 个")
+        
 def get_available_packages(pkg_config_dir: str) -> list:
     """获取可用的包管理器列表"""
     pkg_config_path = Path(pkg_config_dir)

@@ -91,8 +91,9 @@ def _output_actmap_mappings(source_interface, target_interface, config_path, deb
 @click.option('-t', '--target', help='目标包管理器')
 @click.option('--config', help='配置文件路径')
 @click.option('--output-actmap', nargs=2, help='输出配置的映射关系，例如: --output-actmap pacman apt')
+@click.option('--list-actmaps', is_flag=True, help='显示当前配置文件中已有的包管理器')
 @click.pass_context
-def cli(ctx, debug_mode, target, config, output_actmap):
+def cli(ctx, debug_mode, target, config, output_actmap, list_actmaps):
     """ActMap - 智能命令映射工具
     
     将一种包管理器的命令映射到另一种包管理器。
@@ -100,6 +101,7 @@ def cli(ctx, debug_mode, target, config, output_actmap):
     \b
     示例:
         actmap --output-actmap pacman apt        # 输出映射配置
+        actmap --list-actmaps                    # 显示已有包管理器
         actmap map -- apt install vim git        # 映射命令
         actmap map apt install vim git           # 简写形式
         actmap -t apt --debug map -- pacman -Syu # 指定目标和调试
@@ -110,14 +112,19 @@ def cli(ctx, debug_mode, target, config, output_actmap):
     ctx.obj['target'] = target
     ctx.obj['config'] = config
     
+    # 处理 --list-actmaps 选项
+    if list_actmaps and not ctx.invoked_subcommand:
+        _list_actmaps_in_config(config, debug_mode)
+        return
+    
     # 处理 --output-actmap 选项（如果没有子命令）
     if output_actmap and not ctx.invoked_subcommand:
         source_interface, target_interface = output_actmap
         _output_actmap_mappings(source_interface, target_interface, config, debug_mode)
         return
     
-    # 如果没有子命令也没有 --output-actmap，显示帮助
-    if not ctx.invoked_subcommand:
+    # 如果没有子命令也没有选项，显示帮助
+    if not ctx.invoked_subcommand and not any([output_actmap, list_actmaps]):
         click.echo(ctx.get_help())
 
 
@@ -251,6 +258,53 @@ def map(ctx, command):
             debug_plain(traceback.format_exc())
         fatal("程序异常退出")
 
+def _list_actmaps_in_config(config_path, debug_mode):
+    """显示当前配置文件中已有的包管理器"""
+    try:
+        # 使用 ActMap 加载配置
+        if config_path:
+            config_path = Path(config_path)
+        else:
+            # 默认使用 XDG 配置目录
+            xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
+            config_path = xdg_config_home
+
+        actmap = ActMap(config_path)
+        
+        # 获取配置文件中定义的包管理器
+        action_interfaces = actmap.config.get('action_interfaces', {})
+        available_actmaps = list(action_interfaces.keys())
+        
+        if not available_actmaps:
+            info("当前配置文件中没有定义包管理器")
+            return
+        
+        info("📦 当前配置文件中的包管理器:")
+        for actmap_name in sorted(available_actmaps):
+            # 检查是否有对应的动作定义
+            actions_with_this_actmap = []
+            for action_name, action_config in actmap.config.get('actions', {}).items():
+                if actmap_name in action_config:
+                    actions_with_this_actmap.append(action_name)
+            
+            if actions_with_this_actmap:
+                print(f"  ✅ {actmap_name} - 支持 {len(actions_with_this_actmap)} 个动作")
+            else:
+                print(f"  ⚠️  {actmap_name} - 无动作定义")
+        
+        # 显示默认目标
+        default_target = actmap.config.get('config', {}).get('default_target_action')
+        if default_target:
+            print(f"\n🎯 默认目标包管理器: {default_target}")
+        
+        print(f"\n💡 使用 'actmap --output-actmap <源> <目标>' 查看具体映射关系")
+        
+    except Exception as e:
+        error(f"读取配置文件失败: {e}")
+        if debug_mode:
+            import traceback
+            debug_plain("堆栈跟踪:")
+            debug_plain(traceback.format_exc())
 
 # 添加子命令
 cli.add_command(map)
