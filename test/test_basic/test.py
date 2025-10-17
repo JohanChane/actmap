@@ -29,35 +29,35 @@ def test_basic():
         print(f"✅ 支持的动作: {actmap.get_supported_actions()}")
         print(f"✅ 支持的接口: {actmap.get_supported_interfaces()}")
         
-        # 基础测试用例
+        # 基础测试用例 - 包含完整命令名
         test_cases = [
-            # (接口, 参数, 期望动作, 描述)
-            ("pacman", ["vim"], "install", "基本安装"),
-            ("pacman", ["-S", "vim"], "install", "带选项安装"),
-            ("pacman", ["-Ss", "vim"], "search", "搜索包"),
-            ("pacman", ["-s", "vim", "-S"], "search", "逆序搜索"),
-            ("pacman", ["-Ss"], "search", "不指定参数"),
-            ("pacman", ["-S"], "install", "不指定参数"),
-            ("pacman", ["-Qs", "vim"], "search", "查询搜索"),
-            ("pacman", ["-h"], "help", "帮助"),
+            # (接口, 完整参数, 期望动作, 描述)
+            ("pacman", ["pacman", "vim"], "install", "基本安装"),
+            ("pacman", ["pacman", "-S", "vim"], "install", "带选项安装"),
+            ("pacman", ["pacman", "-Ss", "vim"], "search", "搜索包"),
+            ("pacman", ["pacman", "-s", "vim", "-S"], "search", "逆序搜索"),
+            ("pacman", ["pacman", "-Ss"], "search", "不指定参数"),
+            ("pacman", ["pacman", "-S"], "install", "不指定参数"),
+            ("pacman", ["pacman", "-Qs", "vim"], "search", "查询搜索"),
+            ("pacman", ["pacman", "-h"], "help", "帮助"),
             
-            ("apt", ["install", "vim"], "install", "APT安装"),
-            ("apt", ["install"], "install", "不指定参数"),
-            ("apt", ["search", "vim"], "search", "APT搜索"),
-            ("apt", ["search"], "search", "不指定参数"),
-            ("apt", ["--help"], "help", "APT帮助"),
+            ("apt", ["apt", "install", "vim"], "install", "APT安装"),
+            ("apt", ["apt", "install"], "install", "不指定参数"),
+            ("apt", ["apt", "search", "vim"], "search", "APT搜索"),
+            ("apt", ["apt", "search"], "search", "不指定参数"),
+            ("apt", ["apt", "--help"], "help", "APT帮助"),
         ]
         
         print("\n🧪 基础功能测试:")
         passed = 0
         total = len(test_cases)
         
-        for interface, args, expected_action, description in test_cases:
-            print(f"\n  测试: {interface} {' '.join(args)} - {description}")
+        for interface, full_args, expected_action, description in test_cases:
+            print(f"\n  测试: {' '.join(full_args)} - {description}")
             
             try:
-                # 解析参数
-                parse_result = actmap.parse_arguments(interface, args)
+                # 解析参数 - 传递完整参数（包含命令名）
+                parse_result = actmap.parse_arguments(interface, full_args)
                 
                 # 检测动作
                 action = actmap.detect_action(interface, parse_result)

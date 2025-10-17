@@ -1,7 +1,6 @@
-# ActMap - 通用命令映射程序配置文件
+# ActMap - 基础测试配置文件
 
 # === 动作定义 ===
-# ## install
 [actions.install]
 description = "安装软件包"
 args = ["pkgs"]
@@ -12,7 +11,6 @@ cmd_format = "pacman -S {pkgs}"
 [actions.install.apt]
 cmd_format = "apt install {pkgs}"
 
-# ## search
 [actions.search]
 description = "搜索软件包"
 args = ["pkgs"]
@@ -23,7 +21,6 @@ cmd_format = "pacman -Ss {pkgs}"
 [actions.search.apt]
 cmd_format = "apt search {pkgs}"
 
-# ## help
 [actions.help]
 description = "显示帮助信息"
 args = []
@@ -34,51 +31,52 @@ cmd_format = "pacman -h"
 [actions.help.apt]
 cmd_format = "apt --help"
 
-# === pacman 命令的参数解析与动作匹配规则 ===
-# ## 参数解析
-[action_interfaces.pacman.args]
+# === pacman 参数解析 ===
+[action_interfaces.pacman.args.pacman_command]
+cmd_name = "pacman"
 arg_parser = "getopt"
 
 # 全局参数 -h
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "help"
 short_opt = "-h"
 arg = "help"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse]]
-name = "cmd_arg"     # pkgs 属于命令的
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
+name = "cmd_arg"
 is_cmd_arg = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "S"
 short_opt = "-S"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "s"
 short_opt = "-s"
 arg = "search_flag"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "Q"
 short_opt = "-Q"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "s"
 short_opt = "-s"
 arg = "query_search_flag"
 is_flag = true
 
-# ## 动作匹配规则
-[action_interfaces.pacman.triggers]
+# === pacman 动作触发规则 ===
+[action_interfaces.pacman.triggers.pacman_command]
+cmd_name = "pacman"
 
-# 全局帮助触发规则（优先级最高）
-[[action_interfaces.pacman.triggers.rules]]
+# 全局帮助触发规则
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
 trigger = [
@@ -86,82 +84,83 @@ trigger = [
 ]
 
 # Sync 操作组 (-S 相关)
-[[action_interfaces.pacman.triggers.rules]]
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
 trigger = [
-    { params = [{ name = "s" }], action = "search" },  # 移除 value = true
+    { params = [{ name = "s" }], action = "search" },
     { params = [], action = "install" }
 ]
 
-# Query 操作组 (-Q 相关)  
-[[action_interfaces.pacman.triggers.rules]]
+# Query 操作组 (-Q 相关)
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "query_operations"
 condition = { params = [{ name = "Q" }] }
 trigger = [
-    { params = [{ name = "s" }], action = "search" },  # 移除 value = true
+    { params = [{ name = "s" }], action = "search" },
     { params = [], action = "search" }
 ]
 
-# 没有指定 arg 时（优先级最低）
-[[action_interfaces.pacman.triggers.rules]]
+# 没有指定参数时的默认操作
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "no_arg"
 condition = { params = [] }
 trigger = [
-    { params = [], action = "install" }     # `pacman vim` 表示安装 vim
+    { params = [], action = "install" }
 ]
 
-# === APT 命令的参数解析与动作匹配规则 ===
-# ## 参数解析
-[action_interfaces.apt.args]
+# === APT 参数解析 ===
+[action_interfaces.apt.args.apt_command]
+cmd_name = "apt"
 arg_parser = "argparse"
 
 # APT 全局帮助参数
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
 # APT 子命令
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "search"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-# ## 动作匹配规则
-[action_interfaces.apt.triggers]
+# === APT 动作触发规则 ===
+[action_interfaces.apt.triggers.apt_command]
+cmd_name = "apt"
 
 # APT 操作组
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "install" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "search_operations"
-condition = { params = [{ name = "search", is_sub_cmd = true}] }
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "search" }
 ]
 
 # APT 帮助触发规则
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
 trigger = [
     { params = [], action = "help" }
 ]
 
-# ## actmap 的配置
+# === 全局配置 ===
 [config]
 default_target_action = "pacman"

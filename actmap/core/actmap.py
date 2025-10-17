@@ -26,7 +26,7 @@ class ActMap:
         return list(self.config.get('action_interfaces', {}).keys())
     
     def parse_arguments(self, interface: str, command_args: List[str]) -> Dict[str, Any]:
-        """根据配置解析参数 - 支持多命令结构"""
+        """根据配置解析参数"""
         interface_config = self.config.get('action_interfaces', {}).get(interface, {})
         args_config = interface_config.get('args', {})
         
@@ -68,29 +68,13 @@ class ActMap:
                     
                     return result
         
-        # 向后兼容：如果没有找到命令配置，使用传统方式
-        if 'arg_parse' in args_config:
-            if self.debug_mode:
-                debug("   使用传统单命令解析方式")
-            parser_type = args_config.get('arg_parser', 'getopt')
-            arg_parse_config = args_config.get('arg_parse', [])
-            from .factory import ParserFactory
-            parser = ParserFactory.create_parser(parser_type, arg_parse_config)
-            result = parser.parse(command_args)
-            result['detected_command'] = None
-            
-            if self.debug_mode:
-                debug(f"   传统解析结果: {result}")
-            
-            return result
-        
         if self.debug_mode:
             debug("   未找到任何解析配置")
         
         return {'parsed_kwargs': {}, 'present_params': {}, 'detected_command': None}
 
     def detect_action(self, interface: str, parse_result: Dict[str, Any]) -> Optional[str]:
-        """检测动作 - 支持多命令结构"""
+        """检测动作"""
         interface_config = self.config.get('action_interfaces', {}).get(interface, {})
         triggers_config = interface_config.get('triggers', {})
         
@@ -115,13 +99,6 @@ class ActMap:
                         for i, rule in enumerate(rules):
                             debug(f"     规则 {i}: {rule.get('name', 'unnamed')}")
                     return self._check_rules(rules, present_params)
-        
-        # 向后兼容：如果没有找到命令规则，使用传统方式
-        if 'rules' in triggers_config:
-            if self.debug_mode:
-                debug("   使用传统规则检测方式")
-            rules = triggers_config.get('rules', [])
-            return self._check_rules(rules, present_params)
         
         if self.debug_mode:
             debug("   未找到任何匹配的规则")

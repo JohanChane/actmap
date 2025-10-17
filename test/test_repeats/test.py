@@ -27,30 +27,30 @@ def run_repeatable_test(config_path):
         print(f"✅ 支持的动作: {actmap.get_supported_actions()}")
         print(f"✅ 支持的接口: {actmap.get_supported_interfaces()}")
         
-        # 重复选项测试用例
+        # 重复选项测试用例 - 包含命令名
         test_cases = [
             # Pacman 重复选项测试
-            ("pacman", ["-Syy"], "force_update", "强制更新数据库"),
-            ("pacman", ["-Syyu"], "force_upgrade", "强制更新并升级"),
-            ("pacman", ["-Sy"], "update", "普通更新数据库"),
-            ("pacman", ["-Syu"], "upgrade", "普通升级"),
+            ("pacman", ["pacman", "-Syy"], "force_update", "强制更新数据库"),
+            ("pacman", ["pacman", "-Syyu"], "force_upgrade", "强制更新并升级"),
+            ("pacman", ["pacman", "-Sy"], "update", "普通更新数据库"),
+            ("pacman", ["pacman", "-Syu"], "upgrade", "普通升级"),
             
             # APT 区分测试
-            ("apt", ["update"], "update", "普通更新"),
-            ("apt", ["update", "--refresh-all"], "force_update", "强制更新"),
-            ("apt", ["upgrade"], "upgrade", "普通升级"),
+            ("apt", ["apt", "update"], "update", "普通更新"),
+            ("apt", ["apt", "update", "--refresh-all"], "force_update", "强制更新"),
+            ("apt", ["apt", "upgrade"], "upgrade", "普通升级"),
         ]
         
         print("\n🧪 重复选项测试:")
         passed = 0
         total = len(test_cases)
         
-        for interface, args, expected_action, description in test_cases:
-            print(f"\n  测试: {interface} {' '.join(args)} - {description}")
+        for interface, full_args, expected_action, description in test_cases:
+            print(f"\n  测试: {' '.join(full_args)} - {description}")
             
             try:
-                # 解析参数
-                parse_result = actmap.parse_arguments(interface, args)
+                # 解析参数 - 传递完整参数（包含命令名）
+                parse_result = actmap.parse_arguments(interface, full_args)
                 
                 # 检测动作
                 action = actmap.detect_action(interface, parse_result)
