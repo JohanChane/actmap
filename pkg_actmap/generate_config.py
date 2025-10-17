@@ -23,6 +23,7 @@ import shutil
 def generate_config(output, actmaps, pkg_config_dir, list_actmaps, init_config):
     """生成包含多个包管理器的完整配置
 
+    \b
     示例:
         actmap-generate -o config.toml -m pacman -m apt
         actmap-generate -o my_config.toml -m pacman -m apt -m dnf

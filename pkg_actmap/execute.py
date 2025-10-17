@@ -29,6 +29,7 @@ from actmap.log import (
 def execute(command, debug_mode, target, config, interactive, force):
     """执行映射后的命令
 
+    \b
     示例:
         actmap-execute -- apt install vim git
         actmap-execute -i -- pacman -Syu
