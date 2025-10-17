@@ -43,6 +43,9 @@ cmd_format = "rpm -qf {files}"
 [actions.find_file_owner_remote.dnf]
 cmd_format = "dnf provides {files}"
 
+[actions.download_source.dnf]
+cmd_format = "dnf download --source {pkgs}"
+
 # === DNF 参数解析 ===
 
 # DNF 命令的参数解析
@@ -118,6 +121,18 @@ is_sub_cmd = true
 arg = "files"
 nargs = "*"
 
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
+name = "download"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+[[action_interfaces.dnf.args.dnf_command.arg_parse.sub_args]]
+name = "source"
+long_opt = "--source"
+arg = "download_source_flag"
+is_flag = true
+
 # RPM 命令的参数解析
 [action_interfaces.dnf.args.rpm_command]
 cmd_name = "rpm"
@@ -159,32 +174,44 @@ cmd_name = "dnf"
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "install" }]
+trigger = [
+    { params = [], action = "install" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "remove_operations"
 condition = { params = [{ name = "remove", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "remove" }]
+trigger = [
+    { params = [], action = "remove" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "search_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "search" }]
+trigger = [
+    { params = [], action = "search" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "update_operations"
 condition = { params = [{ name = "check-update", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "update" }]
+trigger = [
+    { params = [], action = "update" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "upgrade_operations"
 condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "upgrade" }]
+trigger = [
+    { params = [], action = "upgrade" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "info_operations"
 condition = { params = [{ name = "info", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "info" }]
+trigger = [
+    { params = [], action = "info" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "list_operations"
@@ -205,22 +232,34 @@ trigger = [
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "provides_operations"
 condition = { params = [{ name = "provides", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "find_file_owner_remote" }]
+trigger = [
+    { params = [], action = "find_file_owner_remote" }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "download", is_sub_cmd = true }, { name = "source" }] }
+trigger = [
+    { params = [], action = "download_source" }
+]
 
 [[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
-trigger = [{ params = [], action = "help" }]
+trigger = [
+    { params = [], action = "help" }
+]
 
 # RPM 命令的规则组
 [action_interfaces.dnf.triggers.rpm_command]
 cmd_name = "rpm"
 
-# rpm -q 相关操作
+# Query 操作组 (-q 相关)
 [[action_interfaces.dnf.triggers.rpm_command.rules]]
 name = "query_operations"
-condition = { params = [{ name = "query" }] }  # 基础条件：必须有 -q
+condition = { params = [{ name = "query" }] }
 trigger = [
     { params = [{ name = "file" }], action = "find_file_owner" },    # -qf → find_file_owner
-    { params = [{ name = "list" }], action = "list_files" }          # -ql → list_files
+    { params = [{ name = "list" }], action = "list_files" },         # -ql → list_files
+    { params = [], action = "info" }                                 # -q → info
 ]

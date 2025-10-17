@@ -184,7 +184,7 @@ def generate_config(output, use_actmaps, add_actmaps, pkg_config_dir, list_actma
     
     if operation == "add" and interface_count_change > 0:
         click.echo(f"   新增接口: {interface_count_change} 个")
-        
+
 def get_available_packages(pkg_config_dir: str) -> list:
     """获取可用的包管理器列表"""
     pkg_config_path = Path(pkg_config_dir)
@@ -214,29 +214,57 @@ def init_user_config():
     source_base = Path(__file__).parent / 'base.toml'
     source_config_dir = Path(__file__).parent / 'actmap_config'
 
+    def backup_if_exists(file_path):
+        """如果文件已存在，则创建备份"""
+        if file_path.exists():
+            backup_count = 1
+            backup_path = file_path.with_suffix(f'{file_path.suffix}_{backup_count}')
+            
+            # 找到可用的备份文件名（避免覆盖现有备份）
+            while backup_path.exists():
+                backup_count += 1
+                backup_path = file_path.with_suffix(f'{file_path.suffix}_{backup_count}')
+            
+            shutil.copy2(file_path, backup_path)
+            click.echo(f"📦 已备份: {file_path.name} -> {backup_path.name}")
+            return backup_path
+        return None
+
     # 复制 base.toml
     if source_base.exists():
-        shutil.copy2(source_base, actmap_config_dir / 'base.toml')
-        click.echo(f"✅ 已复制: base.toml -> {actmap_config_dir / 'base.toml'}")
+        target_base = actmap_config_dir / 'base.toml'
+        backup_if_exists(target_base)
+        shutil.copy2(source_base, target_base)
+        click.echo(f"✅ 已复制: base.toml -> {target_base}")
     else:
         click.echo(f"❌ 源文件不存在: {source_base}")
 
     # 复制所有包管理器配置
     if source_config_dir.exists():
         config_files = list(source_config_dir.glob("*.toml"))
+        copied_count = 0
+        
         for config_file in config_files:
-            shutil.copy2(config_file, actmap_pkg_config_dir / config_file.name)
+            target_config = actmap_pkg_config_dir / config_file.name
+            
+            # 备份已存在的文件
+            backup_if_exists(target_config)
+            
+            shutil.copy2(config_file, target_config)
             click.echo(f"✅ 已复制: {config_file.name} -> {actmap_pkg_config_dir / config_file.name}")
+            copied_count += 1
 
-        click.echo(f"📦 共复制了 {len(config_files)} 个包管理器配置")
+        click.echo(f"📦 共复制了 {copied_count} 个包管理器配置")
     else:
         click.echo(f"❌ 源目录不存在: {source_config_dir}")
 
     # 生成默认配置文件
     default_config_path = actmap_config_dir / 'config.toml'
     try:
+        # 备份已存在的配置文件
+        backup_if_exists(default_config_path)
+        
         # 生成包含常用包管理器的默认配置
-        from .generate_config import get_available_packages
         available_packages = get_available_packages(str(actmap_pkg_config_dir))
 
         # 选择常用的包管理器
@@ -288,6 +316,10 @@ def init_user_config():
     click.echo(f"   配置目录: {actmap_config_dir}")
     click.echo(f"   包管理器配置: {actmap_pkg_config_dir}")
     click.echo(f"   默认配置文件: {default_config_path}")
+    
+    # 显示备份信息
+    click.echo(f"💾 已存在的文件已自动备份（后缀为 _1, _2 等）")
+    
     click.echo("")
     click.echo("现在你可以直接使用:")
     click.echo("  actmap map -- apt install vim")
@@ -301,15 +333,7 @@ def init_user_config():
     click.echo("  2. 添加更多包管理器: actmap-generate -o custom.toml -m apt -m pacman -m brew")
     click.echo("  3. 测试命令映射: actmap map -- apt install vim")
     click.echo("  4. 直接执行命令: actmap-execute -y -- pacman -S git")
+
     
-    click.echo("\n💡 示例:")
-    click.echo("  # 查看所有包管理器")
-    click.echo("  actmap-generate --list-actmaps")
-    click.echo("  # 创建自定义配置")
-    click.echo("  actmap-generate -o my.toml -m apt -m pacman -m brew")
-    click.echo("  # 使用自定义配置")
-    click.echo("  actmap map --config my.toml -- apt update")
-
-
 if __name__ == '__main__':
     generate_config()

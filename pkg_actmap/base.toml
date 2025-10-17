@@ -61,35 +61,20 @@ args = []
 description = "列出包的文件"
 args = ["pkgs"]
 
-# ## freeze (语言包管理器特有)
-[actions.freeze]
-description = "冻结依赖版本"
-args = []
+# ## 本地查找文件所属包
+[actions.find_file_owner]
+description = "查找文件属于哪个包（本地已安装）"
+args = ["files"]
 
-# ## build (Cargo/Rust 特有)
-[actions.build]
-description = "构建项目"
-args = []
+# ## 云端查找文件所属包  
+[actions.find_file_owner_remote]
+description = "从仓库查找文件属于哪个包"
+args = ["files"]
 
-# ## run (Cargo/Rust 特有)
-[actions.run]
-description = "运行项目"
-args = []
-
-# ## test (Cargo/Rust 特有)
-[actions.test]
-description = "运行测试"
-args = []
-
-# ## check (Cargo/Rust 特有)
-[actions.check]
-description = "检查代码"
-args = []
-
-# ## doc (Cargo/Rust 特有)
-[actions.doc]
-description = "生成文档"
-args = []
+# ## 下载包的源码
+[actions.download_source]
+description = "下载包的源码"
+args = ["pkgs"]
 
 # === 动作接口定义 ===
 [action_interfaces]

@@ -43,6 +43,9 @@ cmd_format = "dpkg -S {files}"
 [actions.find_file_owner_remote.apt]
 cmd_format = "apt-file search {files}"
 
+[actions.download_source.apt]
+cmd_format = "apt source {pkgs}"
+
 # === APT 参数解析 ===
 
 # APT 命令的参数解析
@@ -112,11 +115,18 @@ is_flag = true
 name = "autoclean"
 is_sub_cmd = true
 
+[[action_interfaces.apt.args.apt_command.arg_parse]]
+name = "source"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
 # dpkg 命令的参数解析
 [action_interfaces.apt.args.dpkg_command]
 cmd_name = "dpkg"
-arg_parser = "argparse"
+arg_parser = "getopt"
 
+# dpkg 选项
 [[action_interfaces.apt.args.dpkg_command.arg_parse]]
 name = "listfiles"
 short_opt = "-L"
@@ -128,6 +138,13 @@ name = "search"
 short_opt = "-S"
 arg = "search_files"
 is_flag = true
+
+# 包名/文件名参数
+[[action_interfaces.apt.args.dpkg_command.arg_parse]]
+name = "cmd_arg"
+is_cmd_arg = true
+arg = "pkgs"
+nargs = "*"
 
 # apt-file 命令的参数解析
 [action_interfaces.apt.args.apt_file_command]
@@ -206,6 +223,13 @@ trigger = [
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "source", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "download_source" }
+]
+
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
 trigger = [
@@ -216,15 +240,14 @@ trigger = [
 [action_interfaces.apt.triggers.dpkg_command]
 cmd_name = "dpkg"
 
+# dpkg 操作组
 [[action_interfaces.apt.triggers.dpkg_command.rules]]
-name = "list_files_operations"
-condition = { params = [{ name = "listfiles" }] }
-trigger = [{ params = [], action = "list_files" }]
-
-[[action_interfaces.apt.triggers.dpkg_command.rules]]
-name = "find_file_owner_operations"
-condition = { params = [{ name = "search" }] }
-trigger = [{ params = [], action = "find_file_owner" }]
+name = "dpkg_operations"
+condition = { params = [] }
+trigger = [
+    { params = [{ name = "listfiles" }], action = "list_files" },    # -L → list_files
+    { params = [{ name = "search" }], action = "find_file_owner" }   # -S → find_file_owner
+]
 
 # apt-file 命令的规则组
 [action_interfaces.apt.triggers.apt_file_command]
@@ -233,4 +256,6 @@ cmd_name = "apt-file"
 [[action_interfaces.apt.triggers.apt_file_command.rules]]
 name = "find_file_owner_remote_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
-trigger = [{ params = [], action = "find_file_owner_remote" }]
+trigger = [
+    { params = [], action = "find_file_owner_remote" }
+]

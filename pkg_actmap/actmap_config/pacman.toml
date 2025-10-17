@@ -43,6 +43,9 @@ cmd_format = "pacman -Qo {files}"
 [actions.find_file_owner_remote.pacman]
 cmd_format = "pacman -F {files}"
 
+[actions.download_source.pacman]
+cmd_format = "asp export {pkgs}"
+
 # === Pacman 参数解析 ===
 [action_interfaces.pacman.args.pacman_command]
 cmd_name = "pacman"
@@ -201,4 +204,27 @@ name = "no_arg"
 condition = { params = [] }
 trigger = [
     { params = [], action = "install" }
+]
+
+# === ASP 参数解析 ===
+[action_interfaces.pacman.args.asp_command]
+cmd_name = "asp"
+arg_parser = "argparse"
+
+# ASP 子命令
+[[action_interfaces.pacman.args.asp_command.arg_parse]]
+name = "export"
+is_sub_cmd = true
+arg = "pkgs"
+nargs = "*"
+
+# === ASP 动作触发规则 ===
+[action_interfaces.pacman.triggers.asp_command]
+cmd_name = "asp"
+
+[[action_interfaces.pacman.triggers.asp_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "export", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "download_source" }
 ]
