@@ -299,8 +299,133 @@ def _list_actmaps_in_config(config_path, debug_mode):
             debug_plain("堆栈跟踪:")
             debug_plain(traceback.format_exc())
 
+@click.command()
+@click.argument('action_name')
+@click.argument('params', nargs=-1)
+@click.pass_context
+def act(ctx, action_name, params):
+    """直接执行指定的动作
+    
+    \b
+    示例:
+        actmap act install vim git              # 安装包
+        actmap act search python == editor      # 搜索包 (使用 == 分隔参数)
+        actmap act update                       # 更新数据库  
+        actmap act list_installed               # 列出已安装包
+        actmap act grep_logs file.log == ERROR == auth == timestamp  # 多参数组
+    """
+    debug_mode = ctx.obj.get('debug_mode', False)
+    target = ctx.obj.get('target')
+    config = ctx.obj.get('config')
+    
+    set_debug(debug_mode)
+    
+    debug("🚀 开始直接动作执行")
+    debug(f"动作名称: {action_name}")
+    debug(f"参数: {params}")
+    debug(f"目标包管理器: {target}")
+    debug(f"配置文件: {config}")
+    
+    try:
+        # 使用 ActMap 执行动作
+        if config:
+            config_path = Path(config)
+        else:
+            xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
+            config_path = xdg_config_home
+
+        actmap = ActMap(config_path)
+        actmap.set_debug(debug_mode)
+        
+        # 设置目标包管理器
+        if target:
+            target_interface = target.lower()
+        else:
+            config_data = actmap.config
+            target_interface = config_data.get('config', {}).get('default_target_action', 'pacman')
+        
+        # 检查动作是否支持
+        supported_actions = actmap.get_supported_actions()
+        if action_name not in supported_actions:
+            error(f"不支持的动作: {action_name}")
+            error(f"支持的动作: {', '.join(supported_actions)}")
+            fatal("请使用支持的动作名称")
+        
+        # 构建解析结果
+        parse_result = {
+            'parsed_kwargs': {},
+            'present_params': {},
+            'detected_command': None
+        }
+        
+        # 根据动作类型处理参数
+        action_config = actmap.config.get('actions', {}).get(action_name, {})
+        action_args = action_config.get('args', [])
+        
+        if debug_mode:
+            debug(f"动作参数定义: {action_args}")
+        
+        # 参数解析逻辑：按顺序分配，遇到 == 切换到下一个参数
+        remaining_params = list(params)
+        parse_result['parsed_kwargs'] = {}
+        
+        for i, arg_name in enumerate(action_args):
+            current_arg_values = []
+            
+            # 从剩余参数中取，直到遇到 == 或没有更多参数
+            while remaining_params:
+                param = remaining_params[0]
+                if param == '==':
+                    # 遇到分隔符，移除它并切换到下一个参数
+                    remaining_params.pop(0)
+                    break
+                else:
+                    # 普通参数，添加到当前参数值
+                    current_arg_values.append(remaining_params.pop(0))
+            
+            parse_result['parsed_kwargs'][arg_name] = current_arg_values
+        
+        if debug_mode:
+            debug(f"参数解析结果: {parse_result['parsed_kwargs']}")
+            debug(f"剩余未处理的参数: {remaining_params}")
+        
+        # 检查必需参数是否都有值
+        missing_args = []
+        for arg_name in action_args:
+            if not parse_result['parsed_kwargs'][arg_name]:
+                missing_args.append(arg_name)
+        
+        if missing_args:
+            error(f"缺少必需参数: {', '.join(missing_args)}")
+            error(f"使用方法: actmap act {action_name} [参数1] == [参数2] == ...")
+            fatal("请提供所有必需的参数")
+        
+        # 如果有剩余参数且没有更多的配置参数，警告用户
+        if remaining_params and debug_mode:
+            warning(f"有未使用的参数: {remaining_params}")
+        
+        # 执行映射
+        mapped_command = actmap.map_command_direct(action_name, target_interface, parse_result)
+        
+        if mapped_command:
+            print(mapped_command)
+            if debug_mode:
+                success("动作执行成功")
+        else:
+            error("无法映射命令")
+            fatal("映射失败")
+        
+    except Exception as e:
+        error(f"动作执行失败: {e}")
+        if debug_mode:
+            import traceback
+            debug_plain("堆栈跟踪:")
+            debug_plain(traceback.format_exc())
+        fatal("程序异常退出")
+        
 # 添加子命令
 cli.add_command(map)
+cli.add_command(act)
 
 
 if __name__ == '__main__':

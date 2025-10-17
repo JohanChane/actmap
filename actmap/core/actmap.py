@@ -279,3 +279,58 @@ class ActMap:
             return None
         else:
             return None
+        
+    def map_command_direct(self, action: str, target_interface: str, parse_result: Dict[str, Any]) -> str:
+        """直接映射动作到目标命令"""
+        actions_config = self.config.get('actions', {})
+        
+        if action not in actions_config:
+            raise ValueError(f"未知动作: {action}")
+        
+        target_config = actions_config[action].get(target_interface)
+        if not target_config:
+            raise ValueError(f"目标接口不支持动作: {target_interface}")
+        
+        cmd_format = target_config['cmd_format']
+        parsed_kwargs = parse_result['parsed_kwargs']
+        
+        if self.debug_mode:
+            debug(f"   直接映射动作: {action} -> {target_interface}")
+            debug(f"   命令模板: {cmd_format}")
+            debug(f"   参数: {parsed_kwargs}")
+        
+        # 手动替换占位符 - 修复列表参数处理
+        formatted_cmd = cmd_format
+        for key, value in parsed_kwargs.items():
+            placeholder = f'{{{key}}}'
+            if placeholder in formatted_cmd:
+                # 处理列表参数：用空格连接列表元素
+                if isinstance(value, list):
+                    formatted_value = ' '.join(str(v) for v in value)
+                else:
+                    formatted_value = str(value)
+                formatted_cmd = formatted_cmd.replace(placeholder, formatted_value)
+        
+        # 清理多余的空格
+        formatted_cmd = ' '.join(formatted_cmd.split())
+        
+        if self.debug_mode:
+            debug(f"   映射结果: {formatted_cmd}")
+        
+        return formatted_cmd
+
+    def _remove_placeholder(self, cmd: str, placeholder: str) -> str:
+        """移除命令模板中的占位符"""
+        # 尝试不同的空格组合来移除占位符
+        patterns = [
+            f' {placeholder} ',
+            f' {placeholder}',
+            f'{placeholder} ',
+            f'{placeholder}'
+        ]
+        
+        for pattern in patterns:
+            if pattern in cmd:
+                cmd = cmd.replace(pattern, '')
+        
+        return cmd
