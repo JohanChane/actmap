@@ -89,11 +89,12 @@ def _output_actmap_mappings(source_interface, target_interface, config_path, deb
 @click.group(invoke_without_command=True)
 @click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
 @click.option('-t', '--target', help='目标包管理器')
+@click.option('-s', '--source', help='源包管理器（当自动检测有歧义时使用）')
 @click.option('--config', help='配置文件路径')
 @click.option('--output-actmap', nargs=2, help='输出配置的映射关系，例如: --output-actmap pacman apt')
 @click.option('--list-actmaps', is_flag=True, help='显示当前配置文件中已有的包管理器')
 @click.pass_context
-def cli(ctx, debug_mode, target, config, output_actmap, list_actmaps):
+def cli(ctx, debug_mode, target, config, source, output_actmap, list_actmaps):
     """ActMap - 智能命令映射工具
     
     将一种包管理器的命令映射到另一种包管理器。
@@ -132,19 +133,11 @@ def cli(ctx, debug_mode, target, config, output_actmap, list_actmaps):
 @click.argument('command', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def map(ctx, command):
-    """映射命令到对应的操作
-    
-    \b
-    使用示例:
-        actmap map -- apt install vim git
-        actmap map apt install vim git
-        actmap -t apt --debug map -- pacman -Syu
-        actmap -t pacman map apt search python
-    """
     # 从上下文获取选项
     debug_mode = ctx.obj.get('debug_mode', False)
     target = ctx.obj.get('target')
     config = ctx.obj.get('config')
+    source = ctx.obj.get('source')  # 新增：获取源选项
     
     # 设置调试模式
     set_debug(debug_mode)
@@ -153,6 +146,7 @@ def map(ctx, command):
     debug(f"接收到的参数: {command}")
     debug(f"调试模式: {debug_mode}")
     debug(f"目标包管理器: {target}")
+    debug(f"源包管理器: {source}")  # 新增调试信息
     debug(f"配置文件: {config}")
     
     try:
@@ -167,7 +161,7 @@ def map(ctx, command):
         if debug_mode:
             info(f"处理命令: {cmd_str}")
         
-        # 使用 ActMap 进行实际映射 - 默认使用 XDG 配置
+        # 使用 ActMap 进行实际映射
         if config:
             config_path = Path(config)
         else:
@@ -178,24 +172,21 @@ def map(ctx, command):
         actmap = ActMap(config_path)
         actmap.set_debug(debug_mode)
         
-        # 检测源包管理器类型（根据第一个参数）
-        first_part = cmd_parts[0]
-        if first_part == 'apt':
-            source_interface = "apt"
-            # 移除 'apt' 命令本身，只保留参数
-            args_to_parse = cmd_parts[1:]
-        elif first_part == 'pacman':
-            source_interface = "pacman" 
-            # 移除 'pacman' 命令本身，只保留参数
-            args_to_parse = cmd_parts[1:]
+        # 检测源包管理器：优先使用用户指定的源
+        if source:
+            source_interface = source
+            if debug_mode:
+                progress(f"使用用户指定的源包管理器: {source_interface}")
         else:
-            # 如果第一个参数不是已知命令，尝试推断
-            if any(part in ['install', 'search', 'remove', 'update', 'upgrade'] for part in cmd_parts):
-                source_interface = "apt"
-                args_to_parse = cmd_parts
-            else:
-                source_interface = "pacman"
-                args_to_parse = cmd_parts
+            source_interface = actmap.detect_source_interface(cmd_parts)
+            if not source_interface:
+                fatal("无法自动检测源包管理器，请使用 -s/--source 选项明确指定")
+        
+        # 使用完整参数进行解析（不移除命令名）
+        args_to_parse = cmd_parts
+
+        if debug_mode:
+            debug(f"完整解析参数: {args_to_parse}")
         
         # 设置目标包管理器：优先级：CLI选项 > 配置文件默认值 > 默认值pacman
         if target:

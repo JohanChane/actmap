@@ -40,89 +40,105 @@ cmd_format = "pacman -Ql {pkgs}"
 [actions.find_file_owner.pacman]
 cmd_format = "pacman -Qo {files}"
 
-[actions.find_file_owner_regex.pacman]
-cmd_format = "pacman -Fx {pattern}"
+[actions.find_file_owner_remote.pacman]
+cmd_format = "pacman -F {files}"
 
 # === Pacman 参数解析 ===
-[action_interfaces.pacman.args]
+[action_interfaces.pacman.args.pacman_command]
+cmd_name = "pacman"
 arg_parser = "getopt"
 
 # 全局参数 -h
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "help"
 short_opt = "-h"
 arg = "help"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "S"
 short_opt = "-S"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "s"
 short_opt = "-s"
 arg = "search_flag"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "y"
 short_opt = "-y"
 arg = "refresh"
 is_flag = true
 is_repeatable = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "u"
 short_opt = "-u"
 arg = "upgrade_flag"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "i"
 short_opt = "-i"
 arg = "info_flag"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "c"
 short_opt = "-c"
 arg = "clean_flag"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "R"
 short_opt = "-R"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "Q"
 short_opt = "-Q"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "s"
 short_opt = "-s"
 arg = "query_search_flag"
 is_flag = true
 
-[[action_interfaces.pacman.args.arg_parse.sub_args]]
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
 name = "l"
 short_opt = "-l"
 arg = "list_files_flag"
 is_flag = true
 
+[[action_interfaces.pacman.args.pacman_command.arg_parse.sub_args]]
+name = "o"
+short_opt = "-o"
+arg = "find_file_owner_flag"
+is_flag = true
+
+[[action_interfaces.pacman.args.pacman_command.arg_parse]]
+name = "F"
+short_opt = "-F"
+is_flag = true
+
 # === Pacman 动作触发规则 ===
 [action_interfaces.pacman.triggers]
 
+# Pacman 命令的规则组
+[action_interfaces.pacman.triggers.pacman_command]
+cmd_name = "pacman"
+
 # 全局帮助触发规则
-[[action_interfaces.pacman.triggers.rules]]
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
 trigger = [
@@ -130,7 +146,7 @@ trigger = [
 ]
 
 # Sync 操作组 (-S 相关)
-[[action_interfaces.pacman.triggers.rules]]
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
 trigger = [
@@ -153,7 +169,7 @@ trigger = [
 ]
 
 # Remove 操作组 (-R 相关)
-[[action_interfaces.pacman.triggers.rules]]
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "remove_operations"
 condition = { params = [{ name = "R" }] }
 trigger = [
@@ -161,17 +177,26 @@ trigger = [
 ]
 
 # Query 操作组 (-Q 相关)
-[[action_interfaces.pacman.triggers.rules]]
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "query_operations"
 condition = { params = [{ name = "Q" }] }
 trigger = [
     { params = [{ name = "s" }], action = "search" },
     { params = [{ name = "l" }], action = "list_files" },
+    { params = [{ name = "o" }], action = "find_file_owner" },
     { params = [], action = "list_installed" }
 ]
 
-# 没有指定 arg 时
-[[action_interfaces.pacman.triggers.rules]]
+# 文件查找操作组 (-F 相关)
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
+name = "find_file_remote_operations"
+condition = { params = [{ name = "F" }] }
+trigger = [
+    { params = [], action = "find_file_owner_remote" }
+]
+
+# 没有指定参数时的默认操作
+[[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "no_arg"
 condition = { params = [] }
 trigger = [

@@ -37,90 +37,131 @@ cmd_format = "apt --help"
 [actions.list_files.apt]
 cmd_format = "dpkg -L {pkgs}"
 
+[actions.find_file_owner.apt]
+cmd_format = "dpkg -S {files}"
+
+[actions.find_file_owner_remote.apt]
+cmd_format = "apt-file search {files}"
+
 # === APT 参数解析 ===
-[action_interfaces.apt.args]
+
+# APT 命令的参数解析
+[action_interfaces.apt.args.apt_command]
+cmd_name = "apt"
 arg_parser = "argparse"
 
 # APT 全局帮助参数
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
 # APT 子命令
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "remove"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "update"
 is_sub_cmd = true
 
-[[action_interfaces.apt.args.arg_parse.sub_args]]
+[[action_interfaces.apt.args.apt_command.arg_parse.sub_args]]
 name = "refresh_all"
 long_opt = "--refresh-all"
 arg = "refresh_all_flag"
 is_flag = true
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "upgrade"
 is_sub_cmd = true
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "search"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "show"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "list"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.apt.args.arg_parse.sub_args]]
+[[action_interfaces.apt.args.apt_command.arg_parse.sub_args]]
 name = "installed"
 long_opt = "--installed"
 arg = "installed_only"
 is_flag = true
 
-[[action_interfaces.apt.args.arg_parse]]
+[[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "autoclean"
 is_sub_cmd = true
+
+# dpkg 命令的参数解析
+[action_interfaces.apt.args.dpkg_command]
+cmd_name = "dpkg"
+arg_parser = "argparse"
+
+[[action_interfaces.apt.args.dpkg_command.arg_parse]]
+name = "listfiles"
+short_opt = "-L"
+arg = "list_files"
+is_flag = true
+
+[[action_interfaces.apt.args.dpkg_command.arg_parse]]
+name = "search"
+short_opt = "-S"
+arg = "search_files"
+is_flag = true
+
+# apt-file 命令的参数解析
+[action_interfaces.apt.args.apt_file_command]
+cmd_name = "apt-file"
+arg_parser = "argparse"
+
+[[action_interfaces.apt.args.apt_file_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "files"
+nargs = "*"
 
 # === APT 动作触发规则 ===
 [action_interfaces.apt.triggers]
 
-[[action_interfaces.apt.triggers.rules]]
+# APT 命令的规则组
+[action_interfaces.apt.triggers.apt_command]
+cmd_name = "apt"
+
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "install" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "remove_operations"
 condition = { params = [{ name = "remove", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "remove" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "update_operations"
 condition = { params = [{ name = "update", is_sub_cmd = true }] }
 trigger = [
@@ -128,28 +169,28 @@ trigger = [
     { params = [], action = "update" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "upgrade_operations"
 condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "upgrade" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "search_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "search" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "info_operations"
 condition = { params = [{ name = "show", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "info" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "list_operations"
 condition = { params = [{ name = "list", is_sub_cmd = true }] }
 trigger = [
@@ -157,16 +198,39 @@ trigger = [
     { params = [], action = "search" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "clean_operations"
 condition = { params = [{ name = "autoclean", is_sub_cmd = true }] }
 trigger = [
     { params = [], action = "clean" }
 ]
 
-[[action_interfaces.apt.triggers.rules]]
+[[action_interfaces.apt.triggers.apt_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
 trigger = [
     { params = [], action = "help" }
 ]
+
+# dpkg 命令的规则组
+[action_interfaces.apt.triggers.dpkg_command]
+cmd_name = "dpkg"
+
+[[action_interfaces.apt.triggers.dpkg_command.rules]]
+name = "list_files_operations"
+condition = { params = [{ name = "listfiles" }] }
+trigger = [{ params = [], action = "list_files" }]
+
+[[action_interfaces.apt.triggers.dpkg_command.rules]]
+name = "find_file_owner_operations"
+condition = { params = [{ name = "search" }] }
+trigger = [{ params = [], action = "find_file_owner" }]
+
+# apt-file 命令的规则组
+[action_interfaces.apt.triggers.apt_file_command]
+cmd_name = "apt-file"
+
+[[action_interfaces.apt.triggers.apt_file_command.rules]]
+name = "find_file_owner_remote_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "find_file_owner_remote" }]

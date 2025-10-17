@@ -11,16 +11,16 @@ cmd_format = "dnf remove {pkgs}"
 cmd_format = "dnf search {pkgs}"
 
 [actions.update.dnf]
-cmd_format = "dnf check-update"  # dnf 没有专门的 update 命令，check-update 检查可用更新
+cmd_format = "dnf check-update"
 
 [actions.upgrade.dnf]
 cmd_format = "dnf upgrade"
 
 [actions.force_update.dnf]
-cmd_format = "dnf clean all && dnf check-update"  # 清理缓存并检查更新
+cmd_format = "dnf clean all && dnf check-update"
 
 [actions.force_upgrade.dnf]
-cmd_format = "dnf clean all && dnf upgrade"  # 清理缓存并升级
+cmd_format = "dnf clean all && dnf upgrade"
 
 [actions.info.dnf]
 cmd_format = "dnf info {pkgs}"
@@ -37,118 +37,156 @@ cmd_format = "dnf --help"
 [actions.list_files.dnf]
 cmd_format = "rpm -ql {pkgs}"
 
+[actions.find_file_owner.dnf]
+cmd_format = "rpm -qf {files}"
+
+[actions.find_file_owner_remote.dnf]
+cmd_format = "dnf provides {files}"
+
 # === DNF 参数解析 ===
-[action_interfaces.dnf.args]
+
+# DNF 命令的参数解析
+[action_interfaces.dnf.args.dnf_command]
+cmd_name = "dnf"
 arg_parser = "argparse"
 
 # DNF 全局帮助参数
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
 # DNF 子命令
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "remove"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "search"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "check-update"
 is_sub_cmd = true
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "upgrade"
 is_sub_cmd = true
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "info"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "list"
 is_sub_cmd = true
 arg = "pkgs"
 nargs = "*"
 
-[[action_interfaces.dnf.args.arg_parse.sub_args]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse.sub_args]]
 name = "installed"
 long_opt = "--installed"
 arg = "installed_only"
 is_flag = true
 
-[[action_interfaces.dnf.args.arg_parse]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "clean"
 is_sub_cmd = true
 
-[[action_interfaces.dnf.args.arg_parse.sub_args]]
+[[action_interfaces.dnf.args.dnf_command.arg_parse.sub_args]]
 name = "all"
 long_opt = "--all"
 arg = "clean_all"
 is_flag = true
 
+[[action_interfaces.dnf.args.dnf_command.arg_parse]]
+name = "provides"
+is_sub_cmd = true
+arg = "files"
+nargs = "*"
+
+# RPM 命令的参数解析
+[action_interfaces.dnf.args.rpm_command]
+cmd_name = "rpm"
+arg_parser = "getopt"
+
+# 查询选项
+[[action_interfaces.dnf.args.rpm_command.arg_parse]]
+name = "query"
+short_opt = "-q"
+is_flag = true
+
+# -q 的子参数
+[[action_interfaces.dnf.args.rpm_command.arg_parse.sub_args]]
+name = "file"
+short_opt = "-f"
+arg = "query_file_flag"
+is_flag = true
+
+[[action_interfaces.dnf.args.rpm_command.arg_parse.sub_args]]
+name = "list"
+short_opt = "-l"
+arg = "query_list_flag"
+is_flag = true
+
+# 包名/文件名参数
+[[action_interfaces.dnf.args.rpm_command.arg_parse]]
+name = "cmd_arg"
+is_cmd_arg = true
+arg = "pkgs"
+nargs = "*"
+
 # === DNF 动作触发规则 ===
 [action_interfaces.dnf.triggers]
 
-[[action_interfaces.dnf.triggers.rules]]
+# DNF 命令的规则组
+[action_interfaces.dnf.triggers.dnf_command]
+cmd_name = "dnf"
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "install" }
-]
+trigger = [{ params = [], action = "install" }]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "remove_operations"
 condition = { params = [{ name = "remove", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "remove" }
-]
+trigger = [{ params = [], action = "remove" }]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "search_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "search" }
-]
+trigger = [{ params = [], action = "search" }]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "update_operations"
 condition = { params = [{ name = "check-update", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "update" }
-]
+trigger = [{ params = [], action = "update" }]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "upgrade_operations"
 condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "upgrade" }
-]
+trigger = [{ params = [], action = "upgrade" }]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "info_operations"
 condition = { params = [{ name = "info", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "info" }
-]
+trigger = [{ params = [], action = "info" }]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "list_operations"
 condition = { params = [{ name = "list", is_sub_cmd = true }] }
 trigger = [
@@ -156,7 +194,7 @@ trigger = [
     { params = [], action = "search" }
 ]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "clean_operations"
 condition = { params = [{ name = "clean", is_sub_cmd = true }] }
 trigger = [
@@ -164,9 +202,25 @@ trigger = [
     { params = [], action = "clean" }
 ]
 
-[[action_interfaces.dnf.triggers.rules]]
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "provides_operations"
+condition = { params = [{ name = "provides", is_sub_cmd = true }] }
+trigger = [{ params = [], action = "find_file_owner_remote" }]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
+trigger = [{ params = [], action = "help" }]
+
+# RPM 命令的规则组
+[action_interfaces.dnf.triggers.rpm_command]
+cmd_name = "rpm"
+
+# rpm -q 相关操作
+[[action_interfaces.dnf.triggers.rpm_command.rules]]
+name = "query_operations"
+condition = { params = [{ name = "query" }] }  # 基础条件：必须有 -q
 trigger = [
-    { params = [], action = "help" }
+    { params = [{ name = "file" }], action = "find_file_owner" },    # -qf → find_file_owner
+    { params = [{ name = "list" }], action = "list_files" }          # -ql → list_files
 ]
