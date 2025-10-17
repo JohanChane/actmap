@@ -215,6 +215,23 @@ def init_user_config():
     click.echo("现在你可以直接使用:")
     click.echo("  actmap map -- apt install vim")
     click.echo("  actmap-execute -- apt search python")
+    click.echo("")
+    click.echo("\n📦 可用包管理器:")
+    click.echo("  使用 'actmap-generate --list-actmaps' 查看完整列表")
+    
+    click.echo("\n🎯 下一步操作:")
+    click.echo("  1. 查看可用包管理器: actmap-generate --list-actmaps")
+    click.echo("  2. 添加更多包管理器: actmap-generate -o custom.toml -m apt -m pacman -m brew")
+    click.echo("  3. 测试命令映射: actmap map -- apt install vim")
+    click.echo("  4. 直接执行命令: actmap-execute -y -- pacman -S git")
+    
+    click.echo("\n💡 示例:")
+    click.echo("  # 查看所有包管理器")
+    click.echo("  actmap-generate --list-actmaps")
+    click.echo("  # 创建自定义配置")
+    click.echo("  actmap-generate -o my.toml -m apt -m pacman -m brew")
+    click.echo("  # 使用自定义配置")
+    click.echo("  actmap map --config my.toml -- apt update")
 
 
 if __name__ == '__main__':

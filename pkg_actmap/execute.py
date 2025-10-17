@@ -185,11 +185,10 @@ def _need_confirmation(action: str, interactive: bool, force: bool) -> bool:
 
 def _confirm_execution(command: str) -> bool:
     """确认是否执行命令"""
-    warning(f"即将执行命令: {command}")
-    click.echo("⚠️  这是一个有影响的操作，确认执行吗？")
-
+    click.echo(f"⚠️  即将执行: {command}")
+    
     try:
-        response = input("请输入 'y' 确认执行，或任意键取消: ").strip().lower()
+        response = input("确认执行? [y/N]: ").strip().lower()
         return response == 'y'
     except KeyboardInterrupt:
         click.echo("\n取消执行")
