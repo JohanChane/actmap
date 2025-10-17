@@ -4,13 +4,63 @@
 """
 
 import click
-import sys
+import sys, os
 from pathlib import Path
 from actmap.log import (
     set_debug, debug, info, success, error, warning, 
     progress, step, debug_plain, fatal
 )
 from actmap.core.actmap import ActMap
+
+def get_available_actions(ctx, param, incomplete):
+    """完全自包含的补全函数 - 显示完整命令格式"""
+    from click.shell_completion import CompletionItem
+    try:
+        comp_env = os.environ.get('_ACTMAP_COMPLETE', '')
+        if not comp_env.endswith('_complete'):
+            return []
+
+        import tomllib
+        config_path = Path.home() / '.config' / 'actmap' / 'config.toml'
+        if not config_path.exists():
+            return []
+
+        with open(config_path, 'rb') as f:
+            config = tomllib.load(f)
+
+        actions_config = config.get('actions', {})
+        default_target = config.get('config', {}).get('default_target_action', 'pacman')
+        completions = []
+        
+        for action_name, action_config in actions_config.items():
+            if incomplete not in action_name:
+                continue
+                
+            # 获取动作描述
+            description = action_config.get('description', '动作')
+            
+            # 获取默认目标的命令格式
+            target_config = action_config.get(default_target, {})
+            cmd_format = target_config.get('cmd_format', '')
+            
+            # 构建帮助信息
+            if cmd_format:
+                help_text = f"{description} | {cmd_format}"
+            else:
+                help_text = f"{description} | 无 {default_target} 命令格式"
+            
+            # 创建补全项
+            completions.append(
+                CompletionItem(
+                    action_name, 
+                    help=help_text
+                )
+            )
+        
+        return completions
+        
+    except Exception:
+        return []
 
 
 def _output_actmap_mappings(source_interface, target_interface, config_path, debug_mode):
@@ -85,11 +135,18 @@ def _output_actmap_mappings(source_interface, target_interface, config_path, deb
             debug_plain("堆栈跟踪:")
             debug_plain(traceback.format_exc())
 
+def get_source_interfaces(ctx, param, incomplete):
+    """获取可用的源包管理器接口列表"""
+    return get_available_interfaces(ctx, param, incomplete)
+
+def get_target_interfaces(ctx, param, incomplete):
+    """获取可用的目标包管理器接口列表"""
+    return get_available_interfaces(ctx, param, incomplete)
 
 @click.group(invoke_without_command=True)
 @click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
-@click.option('-t', '--target', help='目标包管理器')
-@click.option('-s', '--source', help='源包管理器（当自动检测有歧义时使用）')
+@click.option('-t', '--target', help='目标包管理器', shell_complete=get_target_interfaces)
+@click.option('-s', '--source', help='源包管理器（当自动检测有歧义时使用）', shell_complete=get_source_interfaces)
 @click.option('--config', help='配置文件路径')
 @click.option('--output-actmap', nargs=2, help='输出配置的映射关系，例如: --output-actmap pacman apt')
 @click.option('--list-actmaps', is_flag=True, help='显示当前配置文件中已有的包管理器')
@@ -129,10 +186,40 @@ def cli(ctx, debug_mode, target, config, source, output_actmap, list_actmaps):
         click.echo(ctx.get_help())
 
 
+def get_available_interfaces(ctx, param, incomplete):
+    """获取可用的包管理器接口列表用于补全"""
+    from click.shell_completion import CompletionItem
+    try:
+        comp_env = os.environ.get('_ACTMAP_COMPLETE', '')
+        if not comp_env.endswith('_complete'):
+            return []
+
+        import tomllib
+        config_path = Path.home() / '.config' / 'actmap' / 'config.toml'
+        if not config_path.exists():
+            return []
+
+        with open(config_path, 'rb') as f:
+            config = tomllib.load(f)
+
+        interfaces = list(config.get('action_interfaces', {}).keys())
+        return [
+            CompletionItem(interface)
+            for interface in interfaces
+            if incomplete in interface
+        ]
+        
+    except Exception:
+        return []
+    
+
 @click.command(context_settings=dict(ignore_unknown_options=True))
-@click.argument('command', nargs=-1, type=click.UNPROCESSED)
+@click.argument('command', nargs=-1, type=click.UNPROCESSED, shell_complete=get_available_interfaces)
 @click.pass_context
 def map(ctx, command):
+    """映射命令
+    """
+
     # 从上下文获取选项
     debug_mode = ctx.obj.get('debug_mode', False)
     target = ctx.obj.get('target')
@@ -300,11 +387,11 @@ def _list_actmaps_in_config(config_path, debug_mode):
             debug_plain(traceback.format_exc())
 
 @click.command()
-@click.argument('action_name')
+@click.argument('action_name', shell_complete=get_available_actions)
 @click.argument('params', nargs=-1)
 @click.pass_context
 def act(ctx, action_name, params):
-    """直接执行指定的动作
+    """根据动作来映射命令
     
     \b
     示例:
@@ -312,8 +399,8 @@ def act(ctx, action_name, params):
         actmap act search python == editor      # 搜索包 (使用 == 分隔参数)
         actmap act update                       # 更新数据库  
         actmap act list_installed               # 列出已安装包
-        actmap act grep_logs file.log == ERROR == auth == timestamp  # 多参数组
     """
+    # 现有的 act 函数实现保持不变
     debug_mode = ctx.obj.get('debug_mode', False)
     target = ctx.obj.get('target')
     config = ctx.obj.get('config')
@@ -325,7 +412,7 @@ def act(ctx, action_name, params):
     debug(f"参数: {params}")
     debug(f"目标包管理器: {target}")
     debug(f"配置文件: {config}")
-    
+        
     try:
         # 使用 ActMap 执行动作
         if config:
