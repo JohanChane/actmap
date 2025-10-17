@@ -47,8 +47,6 @@ cmd_format = "dnf provides {files}"
 cmd_format = "dnf download --source {pkgs}"
 
 # === DNF 参数解析 ===
-
-# DNF 命令的参数解析
 [action_interfaces.dnf.args.dnf_command]
 cmd_name = "dnf"
 arg_parser = "argparse"
@@ -64,19 +62,19 @@ is_flag = true
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "remove"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "search"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
@@ -90,13 +88,13 @@ is_sub_cmd = true
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "info"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "list"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse.sub_args]]
@@ -118,13 +116,13 @@ is_flag = true
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "provides"
 is_sub_cmd = true
-arg = "files"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "download"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.dnf.args.dnf_command.arg_parse.sub_args]]
@@ -133,7 +131,90 @@ long_opt = "--source"
 arg = "download_source_flag"
 is_flag = true
 
-# RPM 命令的参数解析
+# === DNF 动作触发规则 ===
+[action_interfaces.dnf.triggers.dnf_command]
+cmd_name = "dnf"
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "remove", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "update_operations"
+condition = { params = [{ name = "check-update", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "upgrade_operations"
+condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "upgrade" }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "info_operations"
+condition = { params = [{ name = "info", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "installed" }], action = "list_installed" },
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "clean", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "all" }], action = "clean" },
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "provides_operations"
+condition = { params = [{ name = "provides", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "find_file_owner_remote", arg_map = { targets = "files" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "download", is_sub_cmd = true }, { name = "source" }] }
+trigger = [
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.dnf.triggers.dnf_command.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]
+
+# === RPM 参数解析 ===
 [action_interfaces.dnf.args.rpm_command]
 cmd_name = "rpm"
 arg_parser = "getopt"
@@ -157,100 +238,20 @@ short_opt = "-l"
 arg = "query_list_flag"
 is_flag = true
 
-# 包名/文件名参数
+[[action_interfaces.dnf.args.rpm_command.arg_parse.sub_args]]
+name = "info"
+short_opt = "-i"
+arg = "query_info_flag"
+is_flag = true
+
+# 使用统一的 targets 参数名
 [[action_interfaces.dnf.args.rpm_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
-# === DNF 动作触发规则 ===
-[action_interfaces.dnf.triggers]
-
-# DNF 命令的规则组
-[action_interfaces.dnf.triggers.dnf_command]
-cmd_name = "dnf"
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "install_operations"
-condition = { params = [{ name = "install", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "install" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "remove_operations"
-condition = { params = [{ name = "remove", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "remove" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "search_operations"
-condition = { params = [{ name = "search", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "search" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "update_operations"
-condition = { params = [{ name = "check-update", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "update" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "upgrade_operations"
-condition = { params = [{ name = "upgrade", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "upgrade" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "info_operations"
-condition = { params = [{ name = "info", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "info" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "list_operations"
-condition = { params = [{ name = "list", is_sub_cmd = true }] }
-trigger = [
-    { params = [{ name = "installed" }], action = "list_installed" },
-    { params = [], action = "search" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "clean_operations"
-condition = { params = [{ name = "clean", is_sub_cmd = true }] }
-trigger = [
-    { params = [{ name = "all" }], action = "clean" },
-    { params = [], action = "clean" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "provides_operations"
-condition = { params = [{ name = "provides", is_sub_cmd = true }] }
-trigger = [
-    { params = [], action = "find_file_owner_remote" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "download_source_operations"
-condition = { params = [{ name = "download", is_sub_cmd = true }, { name = "source" }] }
-trigger = [
-    { params = [], action = "download_source" }
-]
-
-[[action_interfaces.dnf.triggers.dnf_command.rules]]
-name = "help_operations"
-condition = { params = [{ name = "help" }] }
-trigger = [
-    { params = [], action = "help" }
-]
-
-# RPM 命令的规则组
+# === RPM 动作触发规则 ===
 [action_interfaces.dnf.triggers.rpm_command]
 cmd_name = "rpm"
 
@@ -259,7 +260,8 @@ cmd_name = "rpm"
 name = "query_operations"
 condition = { params = [{ name = "query" }] }
 trigger = [
-    { params = [{ name = "file" }], action = "find_file_owner" },    # -qf → find_file_owner
-    { params = [{ name = "list" }], action = "list_files" },         # -ql → list_files
-    { params = [], action = "info" }                                 # -q → info
+    { params = [{ name = "file" }], action = "find_file_owner", arg_map = { targets = "files" } },
+    { params = [{ name = "list" }], action = "list_files", arg_map = { targets = "pkgs" } },
+    { params = [{ name = "info" }], action = "info", arg_map = { targets = "pkgs" } },
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
 ]

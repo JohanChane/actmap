@@ -63,10 +63,11 @@ short_opt = "-h"
 arg = "help"
 is_flag = true
 
+# 使用统一的 targets 参数名
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]

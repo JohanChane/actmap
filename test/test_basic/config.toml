@@ -43,10 +43,11 @@ short_opt = "-h"
 arg = "help"
 is_flag = true
 
+# 使用统一的 targets 参数名
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
@@ -88,8 +89,8 @@ trigger = [
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
 trigger = [
-    { params = [{ name = "s" }], action = "search" },
-    { params = [], action = "install" }
+    { params = [{ name = "s" }], action = "search", arg_map = { targets = "pkgs" } },
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
 # Query 操作组 (-Q 相关)
@@ -97,8 +98,8 @@ trigger = [
 name = "query_operations"
 condition = { params = [{ name = "Q" }] }
 trigger = [
-    { params = [{ name = "s" }], action = "search" },
-    { params = [], action = "search" }
+    { params = [{ name = "s" }], action = "search", arg_map = { targets = "pkgs" } },
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
 ]
 
 # 没有指定参数时的默认操作
@@ -106,7 +107,7 @@ trigger = [
 name = "no_arg"
 condition = { params = [] }
 trigger = [
-    { params = [], action = "install" }
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
 # === APT 参数解析 ===
@@ -125,13 +126,13 @@ is_flag = true
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "search"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 # === APT 动作触发规则 ===
@@ -143,14 +144,14 @@ cmd_name = "apt"
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "install" }
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "search_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "search" }
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
 ]
 
 # APT 帮助触发规则

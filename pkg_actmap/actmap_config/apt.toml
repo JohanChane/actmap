@@ -47,8 +47,6 @@ cmd_format = "apt-file search {files}"
 cmd_format = "apt source {pkgs}"
 
 # === APT 参数解析 ===
-
-# APT 命令的参数解析
 [action_interfaces.apt.args.apt_command]
 cmd_name = "apt"
 arg_parser = "argparse"
@@ -64,13 +62,13 @@ is_flag = true
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "remove"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.apt.args.apt_command.arg_parse]]
@@ -90,19 +88,19 @@ is_sub_cmd = true
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "search"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "show"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "list"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.apt.args.apt_command.arg_parse.sub_args]]
@@ -118,49 +116,10 @@ is_sub_cmd = true
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "source"
 is_sub_cmd = true
-arg = "pkgs"
-nargs = "*"
-
-# dpkg 命令的参数解析
-[action_interfaces.apt.args.dpkg_command]
-cmd_name = "dpkg"
-arg_parser = "getopt"
-
-# dpkg 选项
-[[action_interfaces.apt.args.dpkg_command.arg_parse]]
-name = "listfiles"
-short_opt = "-L"
-arg = "list_files"
-is_flag = true
-
-[[action_interfaces.apt.args.dpkg_command.arg_parse]]
-name = "search"
-short_opt = "-S"
-arg = "search_files"
-is_flag = true
-
-# 包名/文件名参数
-[[action_interfaces.apt.args.dpkg_command.arg_parse]]
-name = "cmd_arg"
-is_cmd_arg = true
-arg = "pkgs"
-nargs = "*"
-
-# apt-file 命令的参数解析
-[action_interfaces.apt.args.apt_file_command]
-cmd_name = "apt-file"
-arg_parser = "argparse"
-
-[[action_interfaces.apt.args.apt_file_command.arg_parse]]
-name = "search"
-is_sub_cmd = true
-arg = "files"
+arg = "targets"
 nargs = "*"
 
 # === APT 动作触发规则 ===
-[action_interfaces.apt.triggers]
-
-# APT 命令的规则组
 [action_interfaces.apt.triggers.apt_command]
 cmd_name = "apt"
 
@@ -168,14 +127,14 @@ cmd_name = "apt"
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "install" }
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "remove_operations"
 condition = { params = [{ name = "remove", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "remove" }
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
@@ -197,14 +156,14 @@ trigger = [
 name = "search_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "search" }
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "info_operations"
 condition = { params = [{ name = "show", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "info" }
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
@@ -212,7 +171,7 @@ name = "list_operations"
 condition = { params = [{ name = "list", is_sub_cmd = true }] }
 trigger = [
     { params = [{ name = "installed" }], action = "list_installed" },
-    { params = [], action = "search" }
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
@@ -226,7 +185,7 @@ trigger = [
 name = "download_source_operations"
 condition = { params = [{ name = "source", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "download_source" }
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
 ]
 
 [[action_interfaces.apt.triggers.apt_command.rules]]
@@ -236,7 +195,32 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# dpkg 命令的规则组
+# === DPKG 参数解析 ===
+[action_interfaces.apt.args.dpkg_command]
+cmd_name = "dpkg"
+arg_parser = "getopt"
+
+# dpkg 选项
+[[action_interfaces.apt.args.dpkg_command.arg_parse]]
+name = "listfiles"
+short_opt = "-L"
+arg = "list_files"
+is_flag = true
+
+[[action_interfaces.apt.args.dpkg_command.arg_parse]]
+name = "search"
+short_opt = "-S"
+arg = "search_files"
+is_flag = true
+
+# 使用统一的 targets 参数名
+[[action_interfaces.apt.args.dpkg_command.arg_parse]]
+name = "cmd_arg"
+is_cmd_arg = true
+arg = "targets"
+nargs = "*"
+
+# === DPKG 动作触发规则 ===
 [action_interfaces.apt.triggers.dpkg_command]
 cmd_name = "dpkg"
 
@@ -245,11 +229,22 @@ cmd_name = "dpkg"
 name = "dpkg_operations"
 condition = { params = [] }
 trigger = [
-    { params = [{ name = "listfiles" }], action = "list_files" },    # -L → list_files
-    { params = [{ name = "search" }], action = "find_file_owner" }   # -S → find_file_owner
+    { params = [{ name = "listfiles" }], action = "list_files", arg_map = { targets = "pkgs" } },
+    { params = [{ name = "search" }], action = "find_file_owner", arg_map = { targets = "files" } }
 ]
 
-# apt-file 命令的规则组
+# === APT-FILE 参数解析 ===
+[action_interfaces.apt.args.apt_file_command]
+cmd_name = "apt-file"
+arg_parser = "argparse"
+
+[[action_interfaces.apt.args.apt_file_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+# === APT-FILE 动作触发规则 ===
 [action_interfaces.apt.triggers.apt_file_command]
 cmd_name = "apt-file"
 
@@ -257,5 +252,5 @@ cmd_name = "apt-file"
 name = "find_file_owner_remote_operations"
 condition = { params = [{ name = "search", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "find_file_owner_remote" }
+    { params = [], action = "find_file_owner_remote", arg_map = { targets = "files" } }
 ]

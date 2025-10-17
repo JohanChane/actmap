@@ -159,8 +159,8 @@ class ActMap:
         return True
     
     def map_command(self, source_interface: str, target_interface: str, 
-                   action: Optional[str], parse_result: Dict[str, Any]) -> str:
-        """生成命令，如果 action 为 None 则返回空字符串"""
+                action: Optional[str], parse_result: Dict[str, Any]) -> str:
+        """生成命令，支持参数映射"""
         if action is None:
             return ""
         
@@ -176,14 +176,24 @@ class ActMap:
         cmd_format = target_config['cmd_format']
         parsed_kwargs = parse_result['parsed_kwargs']
         
-        debug(f"   从模板中提取的参数名: {re.findall(r'\{(\w+)\}', cmd_format)}")
+        # 获取触发规则中的参数映射
+        arg_mappings = self._get_argument_mappings(source_interface, action, parse_result)
         
-        # 格式化命令
+        # 应用参数映射
+        mapped_kwargs = parsed_kwargs.copy()
+        for source_arg, target_arg in arg_mappings.items():
+            if source_arg in mapped_kwargs:
+                mapped_kwargs[target_arg] = mapped_kwargs.pop(source_arg)
+        
+        debug(f"   从模板中提取的参数名: {re.findall(r'\{(\w+)\}', cmd_format)}")
+        debug(f"   映射后的参数: {mapped_kwargs}")
+        
+        # 使用映射后的参数格式化命令
         formatted_cmd = cmd_format
         
         for param_name in re.findall(r'\{(\w+)\}', cmd_format):
-            if param_name in parsed_kwargs:
-                value = parsed_kwargs[param_name]
+            if param_name in mapped_kwargs:
+                value = mapped_kwargs[param_name]
                 
                 if isinstance(value, list):
                     if value:
@@ -213,7 +223,28 @@ class ActMap:
         formatted_cmd = ' '.join(formatted_cmd.split())
         
         return formatted_cmd
-    
+
+    def _get_argument_mappings(self, source_interface: str, action: str, 
+                            parse_result: Dict[str, Any]) -> Dict[str, str]:
+        """获取参数映射配置"""
+        interface_config = self.config.get('action_interfaces', {}).get(source_interface, {})
+        triggers_config = interface_config.get('triggers', {})
+        
+        arg_mappings = {}
+        
+        # 遍历所有触发规则
+        for rules_key, rules_config in triggers_config.items():
+            if rules_key.endswith('_command'):
+                rules = rules_config.get('rules', [])
+                for rule in rules:
+                    triggers = rule.get('trigger', [])
+                    for trigger in triggers:
+                        if trigger.get('action') == action:
+                            # 检查是否有参数映射配置
+                            arg_map = trigger.get('arg_map', {})
+                            arg_mappings.update(arg_map)
+        
+        return arg_mappings
     def detect_source_interface(self, command_args: List[str]) -> Optional[str]:
         """根据命令参数自动检测源包管理器接口"""
         if not command_args:

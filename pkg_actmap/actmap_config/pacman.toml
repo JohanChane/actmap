@@ -58,10 +58,11 @@ short_opt = "-h"
 arg = "help"
 is_flag = true
 
+# 使用统一的 targets 参数名
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
@@ -134,9 +135,6 @@ short_opt = "-F"
 is_flag = true
 
 # === Pacman 动作触发规则 ===
-[action_interfaces.pacman.triggers]
-
-# Pacman 命令的规则组
 [action_interfaces.pacman.triggers.pacman_command]
 cmd_name = "pacman"
 
@@ -153,22 +151,14 @@ trigger = [
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
 trigger = [
-    # 强制刷新升级：两个 y 参数
     { params = [{ name = "y", repeat = 2 }, { name = "u" }], action = "force_upgrade" },
-    # 强制更新：两个 y 参数
     { params = [{ name = "y", repeat = 2 }], action = "force_update" },
-    # 正常升级：一个 y 参数 + u 参数
     { params = [{ name = "y" }, { name = "u" }], action = "upgrade" },
-    # 正常更新：一个 y 参数
     { params = [{ name = "y" }], action = "update" },
-    # 搜索：s 参数
-    { params = [{ name = "s" }], action = "search" },
-    # 信息：i 参数
-    { params = [{ name = "i" }], action = "info" },
-    # 清理：c 参数
+    { params = [{ name = "s" }], action = "search", arg_map = { targets = "pkgs" } },
+    { params = [{ name = "i" }], action = "info", arg_map = { targets = "pkgs" } },
     { params = [{ name = "c" }], action = "clean" },
-    # 默认：安装
-    { params = [], action = "install" }
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
 # Remove 操作组 (-R 相关)
@@ -176,7 +166,7 @@ trigger = [
 name = "remove_operations"
 condition = { params = [{ name = "R" }] }
 trigger = [
-    { params = [], action = "remove" }
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
 ]
 
 # Query 操作组 (-Q 相关)
@@ -184,9 +174,9 @@ trigger = [
 name = "query_operations"
 condition = { params = [{ name = "Q" }] }
 trigger = [
-    { params = [{ name = "s" }], action = "search" },
-    { params = [{ name = "l" }], action = "list_files" },
-    { params = [{ name = "o" }], action = "find_file_owner" },
+    { params = [{ name = "s" }], action = "search", arg_map = { targets = "pkgs" } },
+    { params = [{ name = "l" }], action = "list_files", arg_map = { targets = "pkgs" } },
+    { params = [{ name = "o" }], action = "find_file_owner", arg_map = { targets = "files" } },
     { params = [], action = "list_installed" }
 ]
 
@@ -195,7 +185,7 @@ trigger = [
 name = "find_file_remote_operations"
 condition = { params = [{ name = "F" }] }
 trigger = [
-    { params = [], action = "find_file_owner_remote" }
+    { params = [], action = "find_file_owner_remote", arg_map = { targets = "files" } }
 ]
 
 # 没有指定参数时的默认操作
@@ -203,7 +193,7 @@ trigger = [
 name = "no_arg"
 condition = { params = [] }
 trigger = [
-    { params = [], action = "install" }
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
 # === ASP 参数解析 ===
@@ -215,7 +205,7 @@ arg_parser = "argparse"
 [[action_interfaces.pacman.args.asp_command.arg_parse]]
 name = "export"
 is_sub_cmd = true
-arg = "pkgs"
+arg = "targets"
 nargs = "*"
 
 # === ASP 动作触发规则 ===
@@ -226,5 +216,5 @@ cmd_name = "asp"
 name = "download_source_operations"
 condition = { params = [{ name = "export", is_sub_cmd = true }] }
 trigger = [
-    { params = [], action = "download_source" }
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
 ]
