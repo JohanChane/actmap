@@ -1,6 +1,6 @@
-# DNF 包管理器配置
+# DNF Package Manager Configuration
 
-# === DNF 命令实现 ===
+# === DNF Command Implementation ===
 [actions.install.dnf]
 cmd_format = "dnf install {pkgs}"
 
@@ -46,19 +46,19 @@ cmd_format = "dnf provides {files}"
 [actions.download_source.dnf]
 cmd_format = "dnf download --source {pkgs}"
 
-# === DNF 参数解析 ===
+# === DNF Parameter Parsing ===
 [action_interfaces.dnf.args.dnf_command]
 cmd_name = "dnf"
 arg_parser = "argparse"
 
-# DNF 全局帮助参数
+# DNF global help parameter
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# DNF 子命令
+# DNF subcommands
 [[action_interfaces.dnf.args.dnf_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -131,7 +131,7 @@ long_opt = "--source"
 arg = "download_source_flag"
 is_flag = true
 
-# === DNF 动作触发规则 ===
+# === DNF Action Trigger Rules ===
 [action_interfaces.dnf.triggers.dnf_command]
 cmd_name = "dnf"
 
@@ -214,18 +214,18 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# === RPM 参数解析 ===
+# === RPM Parameter Parsing ===
 [action_interfaces.dnf.args.rpm_command]
 cmd_name = "rpm"
 arg_parser = "getopt"
 
-# 查询选项
+# Query options
 [[action_interfaces.dnf.args.rpm_command.arg_parse]]
 name = "query"
 short_opt = "-q"
 is_flag = true
 
-# -q 的子参数
+# -q sub-parameters
 [[action_interfaces.dnf.args.rpm_command.arg_parse.sub_args]]
 name = "file"
 short_opt = "-f"
@@ -244,18 +244,18 @@ short_opt = "-i"
 arg = "query_info_flag"
 is_flag = true
 
-# 使用统一的 targets 参数名
+# Use unified targets parameter name
 [[action_interfaces.dnf.args.rpm_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
 arg = "targets"
 nargs = "*"
 
-# === RPM 动作触发规则 ===
+# === RPM Action Trigger Rules ===
 [action_interfaces.dnf.triggers.rpm_command]
 cmd_name = "rpm"
 
-# Query 操作组 (-q 相关)
+# Query operation group (-q related)
 [[action_interfaces.dnf.triggers.rpm_command.rules]]
 name = "query_operations"
 condition = { params = [{ name = "query" }] }

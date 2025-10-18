@@ -1,6 +1,6 @@
-# Zypper 包管理器配置
+# Zypper Package Manager Configuration
 
-# === Zypper 命令实现 ===
+# === Zypper Command Implementation ===
 [actions.install.zypper]
 cmd_format = "zypper install {pkgs}"
 
@@ -46,19 +46,19 @@ cmd_format = "zypper what-provides {files}"
 [actions.download_source.zypper]
 cmd_format = "zypper source-install {pkgs}"
 
-# === Zypper 参数解析 ===
+# === Zypper Parameter Parsing ===
 [action_interfaces.zypper.args.zypper_command]
 cmd_name = "zypper"
 arg_parser = "argparse"
 
-# Zypper 全局帮助参数
+# Zypper global help parameter
 [[action_interfaces.zypper.args.zypper_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# Zypper 子命令
+# Zypper subcommands
 [[action_interfaces.zypper.args.zypper_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -123,7 +123,7 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === Zypper 动作触发规则 ===
+# === Zypper Action Trigger Rules ===
 [action_interfaces.zypper.triggers.zypper_command]
 cmd_name = "zypper"
 

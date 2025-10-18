@@ -1,6 +1,6 @@
-# npm (Node Package Manager) 配置
+# npm (Node Package Manager) Configuration
 
-# === npm 动作命令实现 ===
+# === npm Action Command Implementation ===
 [actions.install.npm]
 cmd_format = "npm install {pkgs}"
 
@@ -25,19 +25,19 @@ cmd_format = "npm cache clean"
 [actions.help.npm]
 cmd_format = "npm help"
 
-# === npm 参数解析 ===
+# === npm Parameter Parsing ===
 [action_interfaces.npm.args.npm_command]
 cmd_name = "npm"
 arg_parser = "argparse"
 
-# npm 全局帮助参数
+# npm global help parameter
 [[action_interfaces.npm.args.npm_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# npm 子命令
+# npm subcommands
 [[action_interfaces.npm.args.npm_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -80,7 +80,7 @@ long_opt = "clean"
 arg = "cache_clean"
 is_flag = true
 
-# === npm 动作触发规则 ===
+# === npm Action Trigger Rules ===
 [action_interfaces.npm.triggers.npm_command]
 cmd_name = "npm"
 

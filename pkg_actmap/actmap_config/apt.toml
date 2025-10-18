@@ -1,6 +1,6 @@
-# APT 包管理器配置
+# APT Package Manager Configuration
 
-# === APT 命令实现 ===
+# === APT Command Implementation ===
 [actions.install.apt]
 cmd_format = "apt install {pkgs}"
 
@@ -46,19 +46,19 @@ cmd_format = "apt-file search {files}"
 [actions.download_source.apt]
 cmd_format = "apt source {pkgs}"
 
-# === APT 参数解析 ===
+# === APT Parameter Parsing ===
 [action_interfaces.apt.args.apt_command]
 cmd_name = "apt"
 arg_parser = "argparse"
 
-# APT 全局帮助参数
+# APT global help parameter
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# APT 子命令
+# APT subcommands
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -119,7 +119,7 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === APT 动作触发规则 ===
+# === APT Action Trigger Rules ===
 [action_interfaces.apt.triggers.apt_command]
 cmd_name = "apt"
 
@@ -195,12 +195,12 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# === DPKG 参数解析 ===
+# === DPKG Parameter Parsing ===
 [action_interfaces.apt.args.dpkg_command]
 cmd_name = "dpkg"
 arg_parser = "getopt"
 
-# dpkg 选项
+# dpkg options
 [[action_interfaces.apt.args.dpkg_command.arg_parse]]
 name = "listfiles"
 short_opt = "-L"
@@ -213,18 +213,18 @@ short_opt = "-S"
 arg = "search_files"
 is_flag = true
 
-# 使用统一的 targets 参数名
+# Use unified targets parameter name
 [[action_interfaces.apt.args.dpkg_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
 arg = "targets"
 nargs = "*"
 
-# === DPKG 动作触发规则 ===
+# === DPKG Action Trigger Rules ===
 [action_interfaces.apt.triggers.dpkg_command]
 cmd_name = "dpkg"
 
-# dpkg 操作组
+# dpkg operation group
 [[action_interfaces.apt.triggers.dpkg_command.rules]]
 name = "dpkg_operations"
 condition = { params = [] }
@@ -233,7 +233,7 @@ trigger = [
     { params = [{ name = "search" }], action = "find_file_owner", arg_map = { targets = "files" } }
 ]
 
-# === APT-FILE 参数解析 ===
+# === APT-FILE Parameter Parsing ===
 [action_interfaces.apt.args.apt_file_command]
 cmd_name = "apt-file"
 arg_parser = "argparse"
@@ -244,7 +244,7 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === APT-FILE 动作触发规则 ===
+# === APT-FILE Action Trigger Rules ===
 [action_interfaces.apt.triggers.apt_file_command]
 cmd_name = "apt-file"
 

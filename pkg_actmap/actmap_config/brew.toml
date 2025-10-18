@@ -1,6 +1,6 @@
-# Homebrew 包管理器配置
+# Homebrew Package Manager Configuration
 
-# === Homebrew 命令实现 ===
+# === Homebrew Command Implementation ===
 [actions.install.brew]
 cmd_format = "brew install {pkgs}"
 
@@ -46,19 +46,19 @@ cmd_format = "brew search {files}"
 [actions.download_source.brew]
 cmd_format = "brew install --build-from-source {pkgs}"
 
-# === Homebrew 参数解析 ===
+# === Homebrew Parameter Parsing ===
 [action_interfaces.brew.args.brew_command]
 cmd_name = "brew"
 arg_parser = "argparse"
 
-# Homebrew 全局帮助参数
+# Homebrew global help parameter
 [[action_interfaces.brew.args.brew_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# Homebrew 子命令
+# Homebrew subcommands
 [[action_interfaces.brew.args.brew_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -125,7 +125,7 @@ is_flag = true
 name = "cleanup"
 is_sub_cmd = true
 
-# === Homebrew 动作触发规则 ===
+# === Homebrew Action Trigger Rules ===
 [action_interfaces.brew.triggers.brew_command]
 cmd_name = "brew"
 

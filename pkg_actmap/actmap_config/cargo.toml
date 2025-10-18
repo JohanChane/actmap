@@ -1,6 +1,6 @@
-# Cargo (Rust Package Manager) 配置
+# Cargo (Rust Package Manager) Configuration
 
-# === Cargo 动作命令实现 ===
+# === Cargo Action Command Implementation ===
 [actions.install.cargo]
 cmd_format = "cargo install {pkgs}"
 
@@ -25,19 +25,19 @@ cmd_format = "cargo --help"
 [actions.download_source.cargo]
 cmd_format = "cargo vendor {pkgs}"
 
-# === Cargo 参数解析 ===
+# === Cargo Parameter Parsing ===
 [action_interfaces.cargo.args.cargo_command]
 cmd_name = "cargo"
 arg_parser = "argparse"
 
-# Cargo 全局帮助参数
+# Cargo global help parameter
 [[action_interfaces.cargo.args.cargo_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# Cargo 子命令
+# Cargo subcommands
 [[action_interfaces.cargo.args.cargo_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -70,14 +70,14 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# install --list 子参数
+# install --list sub-parameter
 [[action_interfaces.cargo.args.cargo_command.arg_parse.sub_args]]
 name = "list"
 long_opt = "--list"
 arg = "list_flag"
 is_flag = true
 
-# === Cargo 动作触发规则 ===
+# === Cargo Action Trigger Rules ===
 [action_interfaces.cargo.triggers.cargo_command]
 cmd_name = "cargo"
 

@@ -1,6 +1,6 @@
-# pip (Python Package Installer) 配置
+# pip (Python Package Installer) Configuration
 
-# === pip 动作命令实现 ===
+# === pip Action Command Implementation ===
 [actions.install.pip]
 cmd_format = "pip install {pkgs}"
 
@@ -31,19 +31,19 @@ cmd_format = "pip --help"
 [actions.download_source.pip]
 cmd_format = "pip download {pkgs}"
 
-# === pip 参数解析 ===
+# === pip Parameter Parsing ===
 [action_interfaces.pip.args.pip_command]
 cmd_name = "pip"
 arg_parser = "argparse"
 
-# pip 全局帮助参数
+# pip global help parameter
 [[action_interfaces.pip.args.pip_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# pip 子命令
+# pip subcommands
 [[action_interfaces.pip.args.pip_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -94,7 +94,7 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === pip 动作触发规则 ===
+# === pip Action Trigger Rules ===
 [action_interfaces.pip.triggers.pip_command]
 cmd_name = "pip"
 

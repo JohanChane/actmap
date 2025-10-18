@@ -1,8 +1,8 @@
-# ActMap - 重复选项测试配置文件
+# ActMap - Repeatable Option Test Configuration File
 
-# === 动作定义 ===
+# === Action Definitions ===
 [actions.update]
-description = "更新软件包数据库"
+description = "Update package database"
 args = []
 
 [actions.update.pacman]
@@ -12,7 +12,7 @@ cmd_format = "pacman -Sy"
 cmd_format = "apt update"
 
 [actions.force_update]
-description = "强制更新软件包数据库"
+description = "Force update package database"
 args = []
 
 [actions.force_update.pacman]
@@ -22,7 +22,7 @@ cmd_format = "pacman -Syy"
 cmd_format = "apt update --refresh-all"
 
 [actions.upgrade]
-description = "升级系统"
+description = "Upgrade system"
 args = []
 
 [actions.upgrade.pacman]
@@ -32,7 +32,7 @@ cmd_format = "pacman -Syu"
 cmd_format = "apt upgrade"
 
 [actions.force_upgrade]
-description = "强制刷新并升级系统"
+description = "Force refresh and upgrade system"
 args = []
 
 [actions.force_upgrade.pacman]
@@ -42,7 +42,7 @@ cmd_format = "pacman -Syyu"
 cmd_format = "apt update --refresh-all && apt upgrade"
 
 [actions.help]
-description = "显示帮助信息"
+description = "Display help information"
 args = []
 
 [actions.help.pacman]
@@ -51,19 +51,19 @@ cmd_format = "pacman -h"
 [actions.help.apt]
 cmd_format = "apt --help"
 
-# === pacman 参数解析 ===
+# === pacman Parameter Parsing ===
 [action_interfaces.pacman.args.pacman_command]
 cmd_name = "pacman"
 arg_parser = "getopt"
 
-# 全局参数 -h
+# Global parameter -h
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "help"
 short_opt = "-h"
 arg = "help"
 is_flag = true
 
-# 使用统一的 targets 参数名
+# Use unified targets parameter name
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
@@ -88,11 +88,11 @@ short_opt = "-u"
 arg = "upgrade"
 is_flag = true
 
-# === pacman 动作触发规则 ===
+# === pacman Action Trigger Rules ===
 [action_interfaces.pacman.triggers.pacman_command]
 cmd_name = "pacman"
 
-# 全局帮助触发规则
+# Global help trigger rule
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
@@ -100,23 +100,23 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# Sync 操作组 (-S 相关)
+# Sync operation group (-S related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
 trigger = [
-    # 强制刷新升级：两个 y 参数
+    # Force refresh upgrade: two y parameters
     { params = [{ name = "y", repeat = 2 }, { name = "u" }], action = "force_upgrade" },
-    # 强制更新：两个 y 参数
+    # Force update: two y parameters
     { params = [{ name = "y", repeat = 2 }], action = "force_update" },
-    # 正常升级：一个 y 参数 + u 参数
+    # Normal upgrade: one y parameter + u parameter
     { params = [{ name = "y" }, { name = "u" }], action = "upgrade" },
-    # 正常更新：一个 y 参数
+    # Normal update: one y parameter
     { params = [{ name = "y" }], action = "update" },
     { params = [{ name = "u" }], action = "upgrade" },
 ]
 
-# 没有指定参数时的默认操作
+# Default operation when no parameters specified
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "no_arg"
 condition = { params = [] }
@@ -124,19 +124,19 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# === APT 参数解析 ===
+# === APT Parameter Parsing ===
 [action_interfaces.apt.args.apt_command]
 cmd_name = "apt"
 arg_parser = "argparse"
 
-# APT 全局帮助参数
+# APT global help parameter
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# APT 子命令
+# APT subcommands
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "update"
 is_sub_cmd = true
@@ -151,11 +151,11 @@ is_flag = true
 name = "upgrade"
 is_sub_cmd = true
 
-# === APT 动作触发规则 ===
+# === APT Action Trigger Rules ===
 [action_interfaces.apt.triggers.apt_command]
 cmd_name = "apt"
 
-# APT 操作组
+# APT operation group
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "update_operations"
 condition = { params = [{ name = "update", is_sub_cmd = true }] }
@@ -171,7 +171,7 @@ trigger = [
     { params = [], action = "upgrade" }
 ]
 
-# APT 帮助触发规则
+# APT help trigger rule
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
@@ -179,6 +179,6 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# === 全局配置 ===
+# === Global Configuration ===
 [config]
 default_target_actmap = "pacman"

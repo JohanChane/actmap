@@ -1,6 +1,6 @@
-# Pacman 包管理器配置
+# Pacman Package Manager Configuration
 
-# === Pacman 命令实现 ===
+# === Pacman Command Implementation ===
 [actions.install.pacman]
 cmd_format = "pacman -S {pkgs}"
 
@@ -46,19 +46,19 @@ cmd_format = "pacman -F {files}"
 [actions.download_source.pacman]
 cmd_format = "asp export {pkgs}"
 
-# === Pacman 参数解析 ===
+# === Pacman Parameter Parsing ===
 [action_interfaces.pacman.args.pacman_command]
 cmd_name = "pacman"
 arg_parser = "getopt"
 
-# 全局参数 -h
+# Global parameter -h
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "help"
 short_opt = "-h"
 arg = "help"
 is_flag = true
 
-# 使用统一的 targets 参数名
+# Use unified targets parameter name
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
@@ -134,11 +134,11 @@ name = "F"
 short_opt = "-F"
 is_flag = true
 
-# === Pacman 动作触发规则 ===
+# === Pacman Action Trigger Rules ===
 [action_interfaces.pacman.triggers.pacman_command]
 cmd_name = "pacman"
 
-# 全局帮助触发规则
+# Global help trigger rule
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
@@ -146,7 +146,7 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# Sync 操作组 (-S 相关)
+# Sync operation group (-S related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
@@ -161,7 +161,7 @@ trigger = [
     { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
-# Remove 操作组 (-R 相关)
+# Remove operation group (-R related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "remove_operations"
 condition = { params = [{ name = "R" }] }
@@ -169,7 +169,7 @@ trigger = [
     { params = [], action = "remove", arg_map = { targets = "pkgs" } }
 ]
 
-# Query 操作组 (-Q 相关)
+# Query operation group (-Q related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "query_operations"
 condition = { params = [{ name = "Q" }] }
@@ -180,7 +180,7 @@ trigger = [
     { params = [], action = "list_installed" }
 ]
 
-# 文件查找操作组 (-F 相关)
+# File search operation group (-F related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "find_file_remote_operations"
 condition = { params = [{ name = "F" }] }
@@ -188,7 +188,7 @@ trigger = [
     { params = [], action = "find_file_owner_remote", arg_map = { targets = "files" } }
 ]
 
-# 没有指定参数时的默认操作
+# Default operation when no parameters specified
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "no_arg"
 condition = { params = [] }
@@ -196,19 +196,19 @@ trigger = [
     { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
-# === ASP 参数解析 ===
+# === ASP Parameter Parsing ===
 [action_interfaces.pacman.args.asp_command]
 cmd_name = "asp"
 arg_parser = "argparse"
 
-# ASP 子命令
+# ASP subcommands
 [[action_interfaces.pacman.args.asp_command.arg_parse]]
 name = "export"
 is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === ASP 动作触发规则 ===
+# === ASP Action Trigger Rules ===
 [action_interfaces.pacman.triggers.asp_command]
 cmd_name = "asp"
 

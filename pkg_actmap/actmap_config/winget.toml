@@ -1,6 +1,6 @@
-# Winget 包管理器配置
+# Winget Package Manager Configuration
 
-# === Winget 命令实现 ===
+# === Winget Command Implementation ===
 [actions.install.winget]
 cmd_format = "winget install {pkgs}"
 
@@ -46,19 +46,19 @@ cmd_format = "winget search {files}"
 [actions.download_source.winget]
 cmd_format = "winget download {pkgs}"
 
-# === Winget 参数解析 ===
+# === Winget Parameter Parsing ===
 [action_interfaces.winget.args.winget_command]
 cmd_name = "winget"
 arg_parser = "argparse"
 
-# Winget 全局帮助参数
+# Winget global help parameter
 [[action_interfaces.winget.args.winget_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# Winget 子命令
+# Winget subcommands
 [[action_interfaces.winget.args.winget_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -131,7 +131,7 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === Winget 动作触发规则 ===
+# === Winget Action Trigger Rules ===
 [action_interfaces.winget.triggers.winget_command]
 cmd_name = "winget"
 
