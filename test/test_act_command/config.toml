@@ -1,40 +1,40 @@
-# ActMap - cat grep grep 测试配置
+# ActMap - cat grep grep Test Configuration
 
 [actions.grep_single]
-description = "单条件文件搜索"
+description = "Single condition file search"
 args = ["files", "pattern1"]
 
 [actions.grep_single.shell]
 cmd_format = "cat {files} | grep {pattern1}"
 
 [actions.grep_double]
-description = "双条件文件搜索"
+description = "Double condition file search"
 args = ["files", "pattern1", "pattern2"]
 
 [actions.grep_double.shell]
 cmd_format = "cat {files} | grep {pattern1} | grep {pattern2}"
 
 [actions.grep_triple]
-description = "三条件文件搜索"
+description = "Triple condition file search"
 args = ["files", "pattern1", "pattern2", "pattern3"]
 
 [actions.grep_triple.shell]
 cmd_format = "cat {files} | grep {pattern1} | grep {pattern2} | grep {pattern3}"
 
 [actions.grep_multi_files]
-description = "多文件搜索"
+description = "Multi-file search"
 args = ["files", "pattern1"]
 
 [actions.grep_multi_files.shell]
 cmd_format = "cat {files} | grep {pattern1}"
 
 [actions.grep_special_chars]
-description = "特殊字符搜索"
+description = "Special character search"
 args = ["files", "pattern1", "pattern2"]
 
 [actions.grep_special_chars.shell]
 cmd_format = "cat {files} | grep {pattern1} | grep {pattern2}"
 
-# === 全局配置 ===
+# === Global Configuration ===
 [config]
 default_target_actmap = "shell"

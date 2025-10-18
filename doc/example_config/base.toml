@@ -1,25 +1,25 @@
-# === action 接口配置 ===
+# === Action Interface Configuration ===
 [actions.install]
-description = "安装软件包"
+description = "Install packages"
 args = ["pkgs"]
 
 [actions.search_remote]
-description = "搜索远程仓库中的软件包"
+description = "Search packages in remote repositories"
 args = ["pkgs"]
 
 [actions.search_local]
-description = "搜索本地已安装的软件包"
+description = "Search locally installed packages"
 args = ["pkgs"]
 
 [actions.list_installed]
-description = "列出已安装的软件包"
+description = "List installed packages"
 args = []
 
 [actions.help]
-description = "显示帮助信息"
+description = "Display help information"
 args = []
 
-# ## list_files (列出包文件)
+# ## list_files (List package files)
 [actions.list_files]
-description = "列出包的文件"
+description = "List package files"
 args = ["pkgs"]

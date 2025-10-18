@@ -1,8 +1,8 @@
-# ActMap - 基础测试配置文件
+# ActMap - Basic Test Configuration File
 
-# === 动作定义 ===
+# === Action Definitions ===
 [actions.install]
-description = "安装软件包"
+description = "Install packages"
 args = ["pkgs"]
 
 [actions.install.pacman]
@@ -12,7 +12,7 @@ cmd_format = "pacman -S {pkgs}"
 cmd_format = "apt install {pkgs}"
 
 [actions.search]
-description = "搜索软件包"
+description = "Search packages"
 args = ["pkgs"]
 
 [actions.search.pacman]
@@ -22,7 +22,7 @@ cmd_format = "pacman -Ss {pkgs}"
 cmd_format = "apt search {pkgs}"
 
 [actions.help]
-description = "显示帮助信息"
+description = "Display help information"
 args = []
 
 [actions.help.pacman]
@@ -31,19 +31,19 @@ cmd_format = "pacman -h"
 [actions.help.apt]
 cmd_format = "apt --help"
 
-# === pacman 参数解析 ===
+# === pacman Parameter Parsing ===
 [action_interfaces.pacman.args.pacman_command]
 cmd_name = "pacman"
 arg_parser = "getopt"
 
-# 全局参数 -h
+# Global parameter -h
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "help"
 short_opt = "-h"
 arg = "help"
 is_flag = true
 
-# 使用统一的 targets 参数名
+# Use unified targets parameter name
 [[action_interfaces.pacman.args.pacman_command.arg_parse]]
 name = "cmd_arg"
 is_cmd_arg = true
@@ -72,11 +72,11 @@ short_opt = "-s"
 arg = "query_search_flag"
 is_flag = true
 
-# === pacman 动作触发规则 ===
+# === pacman Action Trigger Rules ===
 [action_interfaces.pacman.triggers.pacman_command]
 cmd_name = "pacman"
 
-# 全局帮助触发规则
+# Global help trigger rule
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
@@ -84,7 +84,7 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# Sync 操作组 (-S 相关)
+# Sync operation group (-S related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "sync_operations"
 condition = { params = [{ name = "S" }] }
@@ -93,7 +93,7 @@ trigger = [
     { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
-# Query 操作组 (-Q 相关)
+# Query operation group (-Q related)
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "query_operations"
 condition = { params = [{ name = "Q" }] }
@@ -102,7 +102,7 @@ trigger = [
     { params = [], action = "search", arg_map = { targets = "pkgs" } }
 ]
 
-# 没有指定参数时的默认操作
+# Default operation when no parameters specified
 [[action_interfaces.pacman.triggers.pacman_command.rules]]
 name = "no_arg"
 condition = { params = [] }
@@ -110,19 +110,19 @@ trigger = [
     { params = [], action = "install", arg_map = { targets = "pkgs" } }
 ]
 
-# === APT 参数解析 ===
+# === APT Parameter Parsing ===
 [action_interfaces.apt.args.apt_command]
 cmd_name = "apt"
 arg_parser = "argparse"
 
-# APT 全局帮助参数
+# APT global help parameter
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "help"
 long_opt = "--help"
 arg = "help"
 is_flag = true
 
-# APT 子命令
+# APT subcommands
 [[action_interfaces.apt.args.apt_command.arg_parse]]
 name = "install"
 is_sub_cmd = true
@@ -135,11 +135,11 @@ is_sub_cmd = true
 arg = "targets"
 nargs = "*"
 
-# === APT 动作触发规则 ===
+# === APT Action Trigger Rules ===
 [action_interfaces.apt.triggers.apt_command]
 cmd_name = "apt"
 
-# APT 操作组
+# APT operation group
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "install_operations"
 condition = { params = [{ name = "install", is_sub_cmd = true }] }
@@ -154,7 +154,7 @@ trigger = [
     { params = [], action = "search", arg_map = { targets = "pkgs" } }
 ]
 
-# APT 帮助触发规则
+# APT help trigger rule
 [[action_interfaces.apt.triggers.apt_command.rules]]
 name = "help_operations"
 condition = { params = [{ name = "help" }] }
@@ -162,6 +162,6 @@ trigger = [
     { params = [], action = "help" }
 ]
 
-# === 全局配置 ===
+# === Global Configuration ===
 [config]
 default_target_actmap = "pacman"
