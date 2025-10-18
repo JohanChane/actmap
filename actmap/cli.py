@@ -217,13 +217,20 @@ def get_available_interfaces(ctx, param, incomplete):
 @click.argument('command', nargs=-1, type=click.UNPROCESSED, shell_complete=get_available_interfaces)
 @click.pass_context
 def map(ctx, command):
-    """Map command from source package manager to target package manager"""
+    """Map command from source package manager to target package manager
+
+    \b
+    Examples:
+        actmap map apt install vim git
+        actmap -t apt map pacman -S vim
+        actmap map pacman -Si neovim
+    """
 
     # Get options from context
     debug_mode = ctx.obj.get('debug_mode', False)
     target = ctx.obj.get('target')
     config = ctx.obj.get('config')
-    source = ctx.obj.get('source')  # New: get source option
+    source = ctx.obj.get('source')
     
     # Set debug mode
     set_debug(debug_mode)
@@ -268,13 +275,13 @@ def map(ctx, command):
             if not source_interface:
                 fatal("Cannot auto-detect source package manager, please use -s/--source option to specify explicitly")
         
-        # Use full arguments for parsing (do not remove command name)
+        # Use full arguments for parsing
         args_to_parse = cmd_parts
 
         if debug_mode:
             debug(f"Full parsing arguments: {args_to_parse}")
         
-        # Set target package manager: priority: CLI option > config file default > default pacman
+        # Set target package manager
         if target:
             target_interface = target.lower()
         else:
@@ -337,6 +344,7 @@ def map(ctx, command):
             debug_plain(traceback.format_exc())
         fatal("Program exited abnormally")
 
+        
 def _list_actmaps_in_config(config_path, debug_mode):
     """Show available package managers in current configuration file"""
     try:

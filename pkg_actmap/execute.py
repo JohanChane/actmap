@@ -422,17 +422,17 @@ def get_command_completion(ctx, param, incomplete):
         return []
     
 @execute.command()
-@click.argument('command', nargs=-1, type=click.UNPROCESSED, shell_complete=get_command_completion)
+@click.argument('command', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def map(ctx, command):
-    """Execute mapped commands (traditional map method)
+    """Execute mapped commands
 
     \b
     Examples:
-        actmap-execute map -- apt install vim git
-        actmap-execute -i map -- pacman -Syu
-        actmap-execute -f map -- apt remove vim
-        actmap-execute -t apt map -- pacman -S vim
+        actmap-execute map apt install vim git
+        actmap-execute -i map pacman -Syu
+        actmap-execute -f map apt remove vim
+        actmap-execute -t apt map pacman -S vim
     """
     # Get options from context
     debug_mode = ctx.obj.get('debug_mode', False)
@@ -474,20 +474,19 @@ def map(ctx, command):
         actmap = ActMap(config_path)
         actmap.set_debug(debug_mode)
 
-        # 🔧 Fix: Use same auto-detection logic as actmap
+        # Auto-detect source package manager
         source_interface = actmap.detect_source_interface(cmd_parts)
         if not source_interface:
             error("Cannot auto-detect source package manager")
             fatal("Please ensure command format is correct, e.g.: apt install vim or pacman -S vim")
 
-        # 🔧 Fix: Use full arguments for parsing (do not remove command name)
+        # Use full arguments for parsing
         args_to_parse = cmd_parts
 
-        # Set target package manager: priority: CLI option > config file default > default pacman
+        # Set target package manager
         if target:
             target_interface = target.lower()
         else:
-            # Read default target from configuration file
             config_data = actmap.config
             target_interface = config_data.get('config', {}).get('default_target_actmap', 'pacman')
 
@@ -558,5 +557,6 @@ def map(ctx, command):
             debug_plain("Stack trace:")
             debug_plain(traceback.format_exc())
         fatal("Program exited abnormally")
+
 if __name__ == '__main__':
     execute()
