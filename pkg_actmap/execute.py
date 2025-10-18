@@ -36,7 +36,7 @@ def get_available_actions(ctx, param, incomplete):
             config = tomllib.load(f)
 
         actions_config = config.get('actions', {})
-        default_target = config.get('config', {}).get('default_target_action', 'pacman')
+        default_target = config.get('config', {}).get('default_target_actmap', 'pacman')
         completions = []
         
         for action_name, action_config in actions_config.items():
@@ -222,7 +222,7 @@ def act(ctx, action_name, params):
             target_interface = target.lower()
         else:
             config_data = actmap.config
-            target_interface = config_data.get('config', {}).get('default_target_action', 'pacman')
+            target_interface = config_data.get('config', {}).get('default_target_actmap', 'pacman')
         
         # 检查动作是否支持
         supported_actions = actmap.get_supported_actions()
@@ -489,7 +489,7 @@ def map(ctx, command):
         else:
             # 从配置文件中读取默认目标
             config_data = actmap.config
-            target_interface = config_data.get('config', {}).get('default_target_action', 'pacman')
+            target_interface = config_data.get('config', {}).get('default_target_actmap', 'pacman')
 
         # 检查目标包管理器是否在配置文件中定义
         available_interfaces = list(actmap.config.get('action_interfaces', {}).keys())

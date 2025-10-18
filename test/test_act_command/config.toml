@@ -37,4 +37,4 @@ cmd_format = "cat {files} | grep {pattern1} | grep {pattern2}"
 
 # === 全局配置 ===
 [config]
-default_target_action = "shell"
+default_target_actmap = "shell"

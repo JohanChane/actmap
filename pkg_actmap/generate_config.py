@@ -149,12 +149,12 @@ def generate_config(output, use_actmaps, add_actmaps, pkg_config_dir, list_actma
         # 对于添加操作，保持原有的默认目标
         if operation == "create":
             config['config'] = {
-                'default_target_action': actually_added_packages[0]
+                'default_target_actmap': actually_added_packages[0]
             }
         elif operation == "add" and 'config' not in config:
             # 如果添加操作且没有默认配置，设置第一个包管理器为默认
             config['config'] = {
-                'default_target_action': actually_added_packages[0]
+                'default_target_actmap': actually_added_packages[0]
             }
 
     # 确保输出目录存在
@@ -176,7 +176,7 @@ def generate_config(output, use_actmaps, add_actmaps, pkg_config_dir, list_actma
     click.echo(f"   包含的包管理器: {', '.join(actually_added_packages)}")
     
     # 显示默认目标
-    default_target = config.get('config', {}).get('default_target_action', '未设置')
+    default_target = config.get('config', {}).get('default_target_actmap', '未设置')
     click.echo(f"   默认目标包管理器: {default_target}")
     
     click.echo(f"   支持的动作: {len(config.get('actions', {}))} 个")
@@ -299,7 +299,7 @@ def init_user_config():
 
             # 设置默认目标
             config['config'] = {
-                'default_target_action': common_packages[0]
+                'default_target_actmap': common_packages[0]
             }
 
             # 写入默认配置文件

@@ -181,4 +181,4 @@ trigger = [
 
 # === 全局配置 ===
 [config]
-default_target_action = "pacman"
+default_target_actmap = "pacman"
