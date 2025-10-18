@@ -19,232 +19,182 @@
 
 ### 安装
 
-```bash
+```sh
 # 从源码安装
 git clone https://github.com/your-username/actmap.git
 cd actmap
-pip install -e .
+pipx install .
+```
+
+命令补全:
+
+```sh
+# ## zsh
+if command -v actmap &>/dev/null; then
+  eval "$(_ACTMAP_COMPLETE=zsh_source actmap)"
+fi
+
+if command -v actmap-execute &>/dev/null; then
+  eval "$(_ACTMAP_EXECUTE_COMPLETE=zsh_source actmap-execute)"
+fi
 ```
 
 ### 基本使用
 
-```bash
+init-config and set default target actmap:
+
+```sh
 # 初始化用户配置（首次使用）
 actmap-generate --init-config
 
-# 配置 ~/.config/actmap/config.toml
-default_target_action = "<你系统的包管理器>"  # 默认目标包管理器
+# 编辑 ~/.config/actmap/config.toml, 配置默认的 
+default_target_actmap = "<your default target>"  # `actmap -t, --target` 会覆盖这个选项
+```
 
-# 将 apt 命令映射到默认目标（配置文件中的 default_target_action）
+actmap map (自动检测 map 之后的命令来映射到 target actmap):
+
+```sh
+# 将 apt 命令映射到 target actmap
 actmap map -- apt install vim git
-# 如果 default_target_action = "pacman"，输出: pacman -S vim git
+# 如果 target_actmap 是 "pacman"，则映射为: pacman -S vim git
 
-# 将 pacman 命令映射到默认目标
-actmap map -- pacman -Syu
-# 如果 default_target_action = "apt"，输出: apt update && apt upgrade
+# 将 pacman 命令映射到 apt actmap
+actmap -t apt map -- pacman -S vim git  # 映射为: apt install vim git
 
-# 直接执行映射后的命令（使用默认目标）
-actmap-execute -- apt search python
-
-# 查看映射配置
-actmap map --output-actmap pacman apt
+# 查看 pacman actman 到 apt actmap 的映射
+actmap --output-actmap pacman apt
 ```
 
-## 📖 详细用法
+actmap act (根据指定的 action 来映射命令):
 
-### 命令映射
-
-```bash
-# 基本语法
-actmap map [选项] -- <源命令>
-
-# 使用默认目标映射（从配置文件读取）
-actmap map -- apt install vim
-actmap map -- pacman -S vim
-actmap map --debug -- apt remove python3
-
-# 指定目标包管理器（覆盖默认配置）
-actmap map -t apt -- pacman -S vim
-# 输出: apt install vim
-
-actmap map -t dnf -- apt update
-# 输出: dnf check-update
-
-actmap map -t brew -- pacman -Ss editor
-# 输出: brew search editor
-
-# 指定配置文件
-actmap map --config my_config.toml -t apt -- pacman -S vim
+```sh
+actmap act install vim git
+# 如果 target_actmap 是 "pacman"，则执行: pacman -S vim git
 ```
 
-### 直接执行
+actmap-execute (执行映射之后的命令) map :
 
-```bash
-# 使用默认目标执行
-actmap-execute -- apt install vim
+```sh
+actmap-execute map -- pacman -S vim git
 
 # 交互式执行（推荐用于危险操作）
-actmap-execute -i -- pacman -Rns vim
+actmap-execute -i map -- pacman -Rns vim
 
 # 强制执行（跳过确认）
-actmap-execute -f -- apt remove python3
-
-# 调试模式
-actmap-execute -d -- apt search python
-
-# 指定目标包管理器
-actmap-execute -t pacman -- apt update
-actmap-execute -t dnf -- brew install git
+actmap-execute -f map -- apt remove python3
 ```
 
-### 配置管理
+actmap-execute act:
 
-```bash
+```sh
+actmap-execute install vim git
+
+# 如果有动作 grep_log: cat foo.log bar.log | grep -i '{log_level}' | grep -i '{log_msg}'
+actmap-execute -- grep_log foo.log bar.log == ERROR == write
+# 会执行 cat foo.log bar.log | grep -i 'ERROR' | grep -i 'write'
+```
+
+## 使用 actmap-generate 管理 actmap 配置
+
+```sh
 # 初始化用户配置（创建 ~/.config/actmap/）
 actmap-generate --init-config
 
-# 生成自定义配置文件
-actmap-generate -o custom.toml -m pacman -m apt -m dnf
+# 使用 actmaps
+actmap-generate --use-actmaps pacman,apt,dnf,brew,zypper,scoop,winget,chocolatey
 
-# 查看支持的包管理器
+# 新增 actmaps
+actmap-generate --add-actmaps brew,scoop,winget
+
+# 查看支持的 actmaps
 actmap-generate --list-actmaps
 ```
 
-## 🔧 配置说明
-
-ActMap 使用 TOML 配置文件定义包管理器行为。默认配置文件位于 `~/.config/actmap/config.toml`。
-
-### 默认目标配置
-```toml
-[config]
-default_target_action = "pacman"  # 默认目标包管理器
-```
-
-### 动作定义示例
-```toml
-[actions.install]
-description = "安装软件包"
-args = ["pkgs"]
-
-[actions.install.pacman]
-cmd_format = "pacman -S {pkgs}"
-
-[actions.install.apt]
-cmd_format = "apt install {pkgs}"
-
-[actions.install.dnf]
-cmd_format = "dnf install {pkgs}"
-```
-
-### 配置优先级
-1. 命令行 `-t/--target` 选项（最高优先级）
-2. 配置文件中的 `default_target_action`
-3. 默认值 `pacman`（最低优先级）
-
 ## 🎯 使用示例
 
-### 场景1：在 Arch Linux 上使用 apt 习惯
-```bash
-# 配置 default_target_action = "pacman"
+### 使用你熟悉的包管理来安装 vim git
+
+```sh
+# debian
 actmap map -- apt install vim git
-# 输出: pacman -S vim git
-
-actmap map -- apt search python
-# 输出: pacman -Ss python
-
-actmap map -- apt update
-# 输出: pacman -Sy
+# arch
+actmap map -- pacman -S search vim git
 ```
 
-### 场景2：在 Ubuntu 上使用 pacman 习惯  
-```bash
-# 配置 default_target_action = "apt"
-actmap map -- pacman -S vim
-# 输出: apt install vim
+### 使用你熟悉的动作来安装 vim git
 
-actmap map -- pacman -Syu
-# 输出: apt update && apt upgrade
-
-actmap map -- pacman -Ss editor
-# 输出: apt search editor
+```sh
+# use `install` action
+actmap act install vim git
 ```
 
-### 场景3：临时切换目标
-```bash
-# 临时映射到不同目标
-actmap map -t dnf -- apt install vim
-# 输出: dnf install vim
+### 临时切换目标
 
-actmap map -t brew -- pacman -S git
-# 输出: brew install git
+```sh
+# 如果你忘记了 pip 显示包的信息的命令, 则可以使用任意一种你熟悉的方式来执行
+actmap-execute -t pip map -- pacman -Si <pkg>   # 会映射为: pip show <pkg>
+# OR
+actmap-execute -t pip map -- brew info <pkg>
 ```
 
-## 🗂️ 项目结构
+## output-actmap examples
 
-```
-actmap/
-├── actmap/                 # 核心模块
-│   ├── core/              # 核心引擎
-│   │   ├── actmap.py      # 主映射类
-│   │   ├── factory.py     # 解析器工厂
-│   │   └── parsers/       # 参数解析器
-│   ├── config/            # 配置加载
-│   └── cli.py             # 命令行接口
-├── pkg_actmap/            # 包管理器配置
-│   ├── actmap_config/     # 各包管理器配置
-│   │   ├── pacman.toml
-│   │   ├── apt.toml
-│   │   └── ...
-│   └── generate_config.py # 配置生成工具
-├── test/                  # 测试套件
-│   ├── test_basic/        # 基础功能测试
-│   ├── test_actions/      # 动作测试
-│   └── test_repeats/      # 重复选项测试
-└── config.toml           # 主配置文件
+pacman -> apt:
+
+```sh
+actmap --output-actmap pacman apt
 ```
 
-## 🔍 目前已经配置的包管理器
-
-| 包管理器 | 系统 | 状态 |
-|---------|------|------|
-| Pacman | Arch Linux | ✅ 完全支持 |
-| APT | Debian/Ubuntu | ✅ 完全支持 |
-| DNF | Fedora | ✅ 完全支持 |
-| Brew | macOS | ✅ 完全支持 |
-| Zypper | openSUSE | ✅ 完全支持 |
-
-根据配置来实现命令映射, 如果了解 actmap 的命令映射配置, 理论上可以支持任意的包的管理器。
-
-## 🛠️ 开发
-
-### 添加新的包管理器
-
-1. 在 `pkg_actmap/actmap_config/` 创建新的 `.toml` 文件
-2. 定义命令格式和解析规则
-3. 添加触发规则
-4. 测试新配置
-
-### 运行测试
-
-```bash
-# 运行所有测试
-python test/test_basic/test.py
-python test/test_actions/test.py  
-python test/test_repeats/test.py
-
-# 调试模式
-python -m actmap.cli -d map -- apt install vim
+```
+================================================================================
+状态   动作              源命令                       目标命令                          
+--------------------------------------------------------------------------------
+✅    install         pacman -S {pkgs}          apt install {pkgs}            
+✅    remove          pacman -R {pkgs}          apt remove {pkgs}             
+✅    search          pacman -Ss {pkgs}         apt search {pkgs}             
+✅    update          pacman -Sy                apt update                    
+✅    upgrade         pacman -Syu               apt upgrade                   
+✅    force_update    pacman -Syy               apt update --refresh-all      
+✅    force_upgrade   pacman -Syyu              apt update --refresh-all && apt upgrade
+✅    info            pacman -Si {pkgs}         apt show {pkgs}               
+✅    list_installed  pacman -Q                 apt list --installed          
+✅    clean           pacman -Sc                apt autoclean                 
+✅    help            pacman -h                 apt --help                    
+✅    list_files      pacman -Ql {pkgs}         dpkg -L {pkgs}                
+✅    find_file_owner pacman -Qo {files}        dpkg -S {files}               
+✅    find_file_owner_remote pacman -F {files}         apt-file search {files}       
+✅    download_source asp export {pkgs}         apt source {pkgs}             
+================================================================================
 ```
 
-### 调试技巧
+pacman -> pip:
 
-```bash
-# 启用调试输出
-actmap -d map -- apt install vim
-
-# 查看详细解析过程
-actmap -d map -- pacman -Syyu
-
-# 查看映射关系
-actmap map --output-actmap apt pacman
+```sh
+actmap --output-actmap pacman pip
 ```
+
+```
+================================================================================
+状态   动作              源命令                       目标命令                          
+--------------------------------------------------------------------------------
+✅    install         pacman -S {pkgs}          npm install {pkgs}            
+✅    remove          pacman -R {pkgs}          npm uninstall {pkgs}          
+✅    search          pacman -Ss {pkgs}         npm search {pkgs}             
+✅    update          pacman -Sy                npm update                    
+❌    upgrade         pacman -Syu               不支持                           
+❌    force_update    pacman -Syy               不支持                           
+❌    force_upgrade   pacman -Syyu              不支持                           
+✅    info            pacman -Si {pkgs}         npm info {pkgs}               
+✅    list_installed  pacman -Q                 npm list                      
+✅    clean           pacman -Sc                npm cache clean               
+✅    help            pacman -h                 npm help                      
+❌    list_files      pacman -Ql {pkgs}         不支持                           
+❌    find_file_owner pacman -Qo {files}        不支持                           
+❌    find_file_owner_remote pacman -F {files}         不支持                           
+❌    download_source asp export {pkgs}         不支持                           
+================================================================================
+```
+
+## actmap 配置格式说明
+
+See [ref](./doc/actmap_config.md)
