@@ -98,26 +98,53 @@ class ActMap:
                         debug(f"   找到匹配规则组，规则数量: {len(rules)}")
                         for i, rule in enumerate(rules):
                             debug(f"     规则 {i}: {rule.get('name', 'unnamed')}")
-                    return self._check_rules(rules, present_params)
+                    # 修复：添加 parse_result 参数
+                    return self._check_rules(rules, present_params, parse_result)
         
         if self.debug_mode:
             debug("   未找到任何匹配的规则")
         
-        return None
+        return None  # 这里返回 None，因为如果没有匹配的命令，就不应该继续检查规则
 
-    def _check_rules(self, rules: List[Dict], present_params: Dict) -> Optional[str]:
-        """检查规则列表"""
+    def _check_rules(self, rules: List[Dict], present_params: Dict, parse_result: Dict) -> Optional[str]:
+        """检查规则列表 - 考虑 arg_map 和参数存在性"""
         for rule in rules:
             condition = rule.get('condition', {})
             triggers = rule.get('trigger', [])
             
             if self._check_condition(condition, present_params):
+                # 检查所有匹配的触发规则
+                matched_triggers = []
                 for trigger in triggers:
                     trigger_params = trigger.get('params', [])
                     action = trigger.get('action')
                     
                     if self._check_condition({'params': trigger_params}, present_params):
-                        return action
+                        matched_triggers.append(trigger)
+                
+                # 根据 arg_map 和参数存在性选择合适的触发规则
+                if matched_triggers:
+                    return self._select_trigger_by_arg_map(matched_triggers, parse_result)
+        
+        return None
+
+    def _select_trigger_by_arg_map(self, triggers: List[Dict], parse_result: Dict) -> Optional[str]:
+        """根据 arg_map 和参数存在性选择合适的触发规则"""
+        parsed_kwargs = parse_result.get('parsed_kwargs', {})
+        targets = parsed_kwargs.get('targets', [])
+        
+        # 优先检查有 arg_map 且 targets 不为空的规则
+        for trigger in triggers:
+            has_arg_map = 'arg_map' in trigger
+            if has_arg_map and targets:
+                return trigger.get('action')
+        
+        # 然后检查没有 arg_map 且 targets 为空的规则
+        for trigger in triggers:
+            has_arg_map = 'arg_map' in trigger
+            if not has_arg_map and not targets:
+                return trigger.get('action')
+        
         return None
     
     def _check_condition(self, condition: Dict[str, Any], present_params: Dict[str, Any]) -> bool:
