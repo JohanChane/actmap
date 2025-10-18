@@ -1,0 +1,163 @@
+# pip (Python Package Installer) 配置
+
+# === pip 动作命令实现 ===
+[actions.install.pip]
+cmd_format = "pip install {pkgs}"
+
+[actions.remove.pip]
+cmd_format = "pip uninstall {pkgs}"
+
+[actions.search.pip]
+cmd_format = "pip search {pkgs}"
+
+[actions.update.pip]
+cmd_format = "pip install --upgrade pip"
+
+[actions.upgrade.pip]
+cmd_format = "pip install --upgrade {pkgs}"
+
+[actions.info.pip]
+cmd_format = "pip show {pkgs}"
+
+[actions.list_installed.pip]
+cmd_format = "pip list"
+
+[actions.clean.pip]
+cmd_format = "pip cache purge"
+
+[actions.help.pip]
+cmd_format = "pip --help"
+
+[actions.download_source.pip]
+cmd_format = "pip download {pkgs}"
+
+# === pip 参数解析 ===
+[action_interfaces.pip.args.pip_command]
+cmd_name = "pip"
+arg_parser = "argparse"
+
+# pip 全局帮助参数
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# pip 子命令
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.pip.args.pip_command.arg_parse.sub_args]]
+name = "upgrade"
+long_opt = "--upgrade"
+arg = "upgrade_flag"
+is_flag = true
+
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "show"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "list"
+is_sub_cmd = true
+
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "cache"
+is_sub_cmd = true
+
+[[action_interfaces.pip.args.pip_command.arg_parse.sub_args]]
+name = "purge"
+long_opt = "purge"
+arg = "cache_purge"
+is_flag = true
+
+[[action_interfaces.pip.args.pip_command.arg_parse]]
+name = "download"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+# === pip 动作触发规则 ===
+[action_interfaces.pip.triggers.pip_command]
+cmd_name = "pip"
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "upgrade" }], action = "upgrade", arg_map = { targets = "pkgs" } },
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "info_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "list_installed" }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "cache", is_sub_cmd = true }, { name = "purge" }] }
+trigger = [
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "download", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "update_operations"
+condition = { params = [] }
+trigger = [
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.pip.triggers.pip_command.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]

@@ -1,0 +1,132 @@
+# Cargo (Rust Package Manager) 配置
+
+# === Cargo 动作命令实现 ===
+[actions.install.cargo]
+cmd_format = "cargo install {pkgs}"
+
+[actions.search.cargo]
+cmd_format = "cargo search {pkgs}"
+
+[actions.update.cargo]
+cmd_format = "cargo update"
+
+[actions.info.cargo]
+cmd_format = "cargo show {pkgs}"
+
+[actions.list_installed.cargo]
+cmd_format = "cargo install --list"
+
+[actions.clean.cargo]
+cmd_format = "cargo clean"
+
+[actions.help.cargo]
+cmd_format = "cargo --help"
+
+[actions.download_source.cargo]
+cmd_format = "cargo vendor {pkgs}"
+
+# === Cargo 参数解析 ===
+[action_interfaces.cargo.args.cargo_command]
+cmd_name = "cargo"
+arg_parser = "argparse"
+
+# Cargo 全局帮助参数
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# Cargo 子命令
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "update"
+is_sub_cmd = true
+
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "show"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "clean"
+is_sub_cmd = true
+
+[[action_interfaces.cargo.args.cargo_command.arg_parse]]
+name = "vendor"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+# install --list 子参数
+[[action_interfaces.cargo.args.cargo_command.arg_parse.sub_args]]
+name = "list"
+long_opt = "--list"
+arg = "list_flag"
+is_flag = true
+
+# === Cargo 动作触发规则 ===
+[action_interfaces.cargo.triggers.cargo_command]
+cmd_name = "cargo"
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [{ name = "list" }], action = "list_installed" },
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "update_operations"
+condition = { params = [{ name = "update", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "info_operations"
+condition = { params = [{ name = "show", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "clean", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "download_source_operations"
+condition = { params = [{ name = "vendor", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "download_source", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.cargo.triggers.cargo_command.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]

@@ -1,0 +1,141 @@
+# npm (Node Package Manager) 配置
+
+# === npm 动作命令实现 ===
+[actions.install.npm]
+cmd_format = "npm install {pkgs}"
+
+[actions.remove.npm]
+cmd_format = "npm uninstall {pkgs}"
+
+[actions.search.npm]
+cmd_format = "npm search {pkgs}"
+
+[actions.update.npm]
+cmd_format = "npm update"
+
+[actions.info.npm]
+cmd_format = "npm info {pkgs}"
+
+[actions.list_installed.npm]
+cmd_format = "npm list"
+
+[actions.clean.npm]
+cmd_format = "npm cache clean"
+
+[actions.help.npm]
+cmd_format = "npm help"
+
+# === npm 参数解析 ===
+[action_interfaces.npm.args.npm_command]
+cmd_name = "npm"
+arg_parser = "argparse"
+
+# npm 全局帮助参数
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "help"
+long_opt = "--help"
+arg = "help"
+is_flag = true
+
+# npm 子命令
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "install"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "uninstall"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "search"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "update"
+is_sub_cmd = true
+
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "info"
+is_sub_cmd = true
+arg = "targets"
+nargs = "*"
+
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "list"
+is_sub_cmd = true
+
+[[action_interfaces.npm.args.npm_command.arg_parse]]
+name = "cache"
+is_sub_cmd = true
+
+[[action_interfaces.npm.args.npm_command.arg_parse.sub_args]]
+name = "clean"
+long_opt = "clean"
+arg = "cache_clean"
+is_flag = true
+
+# === npm 动作触发规则 ===
+[action_interfaces.npm.triggers.npm_command]
+cmd_name = "npm"
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "install_operations"
+condition = { params = [{ name = "install", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "install", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "remove_operations"
+condition = { params = [{ name = "uninstall", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "remove", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "search_operations"
+condition = { params = [{ name = "search", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "search", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "update_operations"
+condition = { params = [{ name = "update", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "update" }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "info_operations"
+condition = { params = [{ name = "info", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "info", arg_map = { targets = "pkgs" } }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "list_operations"
+condition = { params = [{ name = "list", is_sub_cmd = true }] }
+trigger = [
+    { params = [], action = "list_installed" }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "clean_operations"
+condition = { params = [{ name = "cache", is_sub_cmd = true }, { name = "clean" }] }
+trigger = [
+    { params = [], action = "clean" }
+]
+
+[[action_interfaces.npm.triggers.npm_command.rules]]
+name = "help_operations"
+condition = { params = [{ name = "help" }] }
+trigger = [
+    { params = [], action = "help" }
+]
