@@ -5,14 +5,14 @@
 会区分有没有传入包名:
 
 ```sh
-actmap -t pacman map -- apt list --installed            # pacman -Q
-actmap -t pacman map -- apt list --installed vim git    # pacman -Qs vim git
+actmap -t pacman map apt list --installed            # pacman -Q
+actmap -t pacman map apt list --installed vim git    # pacman -Qs vim git
 ```
 
 能识别 python 的 optget 和 argpase 的写法标准:
 
 ```sh
-actmap -t pacman map -- pacman -s vim git -S    # `pacman -Ss vim git`. 我的配置里表示 `S/-s` 只是一个 flag, 但 `-S` 是一个 `group flag`。`vim git` 属于 pacman param。
+actmap -t pacman map pacman -s vim git -S    # `pacman -Ss vim git`. 我的配置里表示 `S/-s` 只是一个 flag, 但 `-S` 是一个 `group flag`。`vim git` 属于 pacman param。
 ```
 
 ## 动作接口定义

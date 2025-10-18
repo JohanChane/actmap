@@ -160,9 +160,9 @@ def cli(ctx, debug_mode, target, config, source, output_actmap, list_actmaps):
     Examples:
         actmap --output-actmap pacman apt        # Output mapping configuration
         actmap --list-actmaps                    # Show available package managers
-        actmap map -- apt install vim git        # Map command
+        actmap map apt install vim git        # Map command
         actmap map apt install vim git           # Short form
-        actmap -t apt --debug map -- pacman -Syu # Specify target and debug
+        actmap -t apt --debug map pacman -Syu # Specify target and debug
     """
     # Ensure subcommands can access these options
     ctx.ensure_object(dict)
@@ -344,7 +344,7 @@ def map(ctx, command):
             debug_plain(traceback.format_exc())
         fatal("Program exited abnormally")
 
-        
+
 def _list_actmaps_in_config(config_path, debug_mode):
     """Show available package managers in current configuration file"""
     try:

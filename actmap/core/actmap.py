@@ -303,7 +303,7 @@ class ActMap:
         elif len(matches) > 1:
             warning(f"Multiple package managers support command '{first_arg}': {', '.join(matches)}")
             warning(f"Please use -s/--source option to explicitly specify source package manager, e.g.:")
-            warning(f"  actmap -s {matches[0]} map -- {first_arg} ...")
+            warning(f"  actmap -s {matches[0]} map {first_arg} ...")
             return None
         else:
             return None

@@ -322,8 +322,8 @@ def init_user_config():
     
     click.echo("")
     click.echo("Now you can directly use:")
-    click.echo("  actmap map -- apt install vim")
-    click.echo("  actmap-execute -- apt search python")
+    click.echo("  actmap map apt install vim")
+    click.echo("  actmap-execute map apt search python")
     click.echo("")
     click.echo("📦 Available package managers:")
     click.echo("  Use 'actmap-generate --list-actmaps' to view complete list")
@@ -332,8 +332,8 @@ def init_user_config():
     click.echo("  1. View available package managers: actmap-generate --list-actmaps")
     click.echo("  2. Create complete configuration: actmap-generate --use-actmaps pacman,apt,dnf,brew,zypper,scoop,winget,chocolatey")
     click.echo("  3. Add specific package managers: actmap-generate --add-actmaps brew,scoop,winget")
-    click.echo("  4. Test command mapping: actmap map -- apt install vim")
-    click.echo("  5. Direct command execution: actmap-execute -i -- pacman -S git")
+    click.echo("  4. Test command mapping: actmap map apt install vim")
+    click.echo("  5. Direct command execution: actmap-execute -i map pacman -S git")
 
 
 if __name__ == '__main__':
