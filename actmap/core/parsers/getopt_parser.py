@@ -2,77 +2,77 @@ from typing import Dict, List, Any, Optional
 
 
 class GetoptParser:
-    """getopt 风格解析器（支持新配置格式）"""
+    """getopt style parser (supports new configuration format)"""
     
     def __init__(self, arg_parse_config: List[Dict[str, Any]]):
         self.arg_parse_config = arg_parse_config
         
     def parse(self, args: List[str]) -> Dict[str, Any]:
-        """解析 getopt 风格参数"""
+        """Parse getopt style arguments"""
         result = {
             'parsed_kwargs': {},
             'present_params': {},
         }
         
-        # 展开组合参数 - 支持重复选项
+        # Expand combined arguments - support repeated options
         expanded_args = self._expand_combined_args(args)
         
-        # 初始化默认值
+        # Initialize default values
         self._init_defaults(result)
         
-        # 查找 cmd_arg 配置
+        # Find cmd_arg configuration
         cmd_arg_config = self._find_cmd_arg_config()
         
-        # 删除这两行 print 语句
-        # print(f"   展开后参数: {expanded_args}")
-        # print(f"   cmd_arg 配置: {cmd_arg_config}")
+        # Remove these two print statements
+        # print(f"   Expanded arguments: {expanded_args}")
+        # print(f"   cmd_arg configuration: {cmd_arg_config}")
         
         i = 0
         while i < len(expanded_args):
             arg = expanded_args[i]
             
             if arg.startswith('-'):
-                # 首先尝试作为主参数查找
+                # First try to find as main parameter
                 config = self._find_config_by_option(arg)
                 if config:
                     i = self._parse_option_arg(i, expanded_args, config, result)
                 else:
-                    # 如果不是主参数，尝试作为子参数查找
+                    # If not main parameter, try to find as sub-parameter
                     sub_config = self._find_sub_config_globally(arg)
                     if sub_config:
                         self._handle_standalone_sub_arg(sub_config, result)
                         i += 1
                     else:
-                        # 未知选项，跳过
+                        # Unknown option, skip
                         i += 1
             else:
-                # 处理包名参数（cmd_arg）
+                # Handle package name parameters (cmd_arg)
                 if cmd_arg_config:
                     self._handle_cmd_arg(arg, cmd_arg_config, result)
                 else:
-                    # 如果没有 cmd_arg 配置，当作普通参数值
+                    # If no cmd_arg configuration, treat as normal parameter value
                     pass
                 i += 1
         
         return result
         
     def _init_defaults(self, result: Dict[str, Any]):
-        """初始化默认值"""
+        """Initialize default values"""
         for config in self.arg_parse_config:
             arg_key = config.get('arg')
             logical_name = config.get('name', '')
             
-            # 为 cmd_arg 初始化空列表
+            # Initialize empty list for cmd_arg
             if config.get('is_cmd_arg', False):
                 if arg_key:
                     result['parsed_kwargs'][arg_key] = []
                 continue
                 
-            # 初始化标志参数的默认值
+            # Initialize default values for flag parameters
             if config.get('is_flag', False) and arg_key:
                 result['parsed_kwargs'][arg_key] = False
             
-            # 初始化子参数的默认值
+            # Initialize default values for sub-parameters
             for sub_config in config.get('sub_args', []):
                 sub_arg_key = sub_config.get('arg')
                 if sub_arg_key and sub_config.get('is_flag', False):
@@ -80,7 +80,7 @@ class GetoptParser:
     
     def _parse_option_arg(self, current_index: int, args: List[str], 
                          config: Dict[str, Any], result: Dict[str, Any]) -> int:
-        """解析选项参数 - 支持重复选项计数"""
+        """Parse option argument - support repeated option counting"""
         i = current_index
         logical_name = config.get('name', '')
         arg_key = config.get('arg')
@@ -88,8 +88,8 @@ class GetoptParser:
         is_repeatable = config.get('is_repeatable', False)
         sub_args = config.get('sub_args', [])
         
-        # 记录参数（使用逻辑名称作为键）
-        # 如果参数已经存在且可重复，增加计数
+        # Record parameter (using logical name as key)
+        # If parameter already exists and is repeatable, increment count
         if logical_name in result['present_params'] and is_repeatable:
             current_value = result['present_params'][logical_name]['value']
             if isinstance(current_value, int):
@@ -105,7 +105,7 @@ class GetoptParser:
                 'is_repeatable': is_repeatable
             }
         
-        # 如果是标志参数，设置对应的值（支持计数）
+        # If it's a flag parameter, set corresponding value (support counting)
         if is_flag and arg_key:
             if arg_key in result['parsed_kwargs'] and is_repeatable:
                 current_val = result['parsed_kwargs'][arg_key]
@@ -116,10 +116,10 @@ class GetoptParser:
             else:
                 result['parsed_kwargs'][arg_key] = True
         
-        # 移动到下一个参数
+        # Move to next argument
         i += 1
         
-        # 处理子参数
+        # Handle sub-arguments
         if sub_args and i < len(args) and args[i].startswith('-'):
             i = self._parse_sub_args(i, args, sub_args, result)
         
@@ -127,19 +127,19 @@ class GetoptParser:
     
     def _parse_sub_args(self, current_index: int, args: List[str], 
                        sub_configs: List[Dict[str, Any]], result: Dict[str, Any]) -> int:
-        """解析子参数 - 支持重复选项计数"""
+        """Parse sub-arguments - support repeated option counting"""
         i = current_index
         
         while i < len(args):
             arg = args[i]
             
             if not arg.startswith('-'):
-                # 非选项参数，停止解析子参数
+                # Non-option argument, stop parsing sub-arguments
                 break
                 
             sub_config = self._find_config_by_option_in_list(sub_configs, arg)
             if not sub_config:
-                # 不是子参数，停止解析
+                # Not a sub-argument, stop parsing
                 break
                 
             logical_name = sub_config.get('name', '')
@@ -147,7 +147,7 @@ class GetoptParser:
             is_flag = sub_config.get('is_flag', False)
             is_repeatable = sub_config.get('is_repeatable', False)
             
-            # 记录子参数（支持计数）
+            # Record sub-parameter (support counting)
             if logical_name in result['present_params'] and is_repeatable:
                 current_value = result['present_params'][logical_name]['value']
                 if isinstance(current_value, int):
@@ -178,22 +178,22 @@ class GetoptParser:
         return i
     
     def _handle_cmd_arg(self, arg: str, config: Dict[str, Any], result: Dict[str, Any]):
-        """处理 cmd_arg 参数（通用参数值）"""
+        """Handle cmd_arg parameters (generic parameter values)"""
         arg_key = config.get('arg', 'pkgs')
         
-        # 添加到参数值列表
+        # Add to parameter value list
         if arg_key not in result['parsed_kwargs']:
             result['parsed_kwargs'][arg_key] = []
         result['parsed_kwargs'][arg_key].append(arg)
     
     def _handle_standalone_sub_arg(self, config: Dict[str, Any], result: Dict[str, Any]):
-        """处理独立的子参数"""
+        """Handle standalone sub-arguments"""
         logical_name = config.get('name', '')
         arg_key = config.get('arg')
         is_flag = config.get('is_flag', False)
         is_repeatable = config.get('is_repeatable', False)
         
-        # 支持重复选项计数
+        # Support repeated option counting
         if logical_name in result['present_params'] and is_repeatable:
             current_value = result['present_params'][logical_name]['value']
             if isinstance(current_value, int):
@@ -220,25 +220,25 @@ class GetoptParser:
                 result['parsed_kwargs'][arg_key] = True
     
     def _find_config_by_option(self, option_name: str) -> Optional[Dict[str, Any]]:
-        """通过选项名查找配置"""
+        """Find configuration by option name"""
         for config in self.arg_parse_config:
-            # 检查 short_opt
+            # Check short_opt
             if config.get('short_opt') == option_name:
                 return config
-            # 检查 long_opt
+            # Check long_opt
             if config.get('long_opt') == option_name:
                 return config
         return None
     
     def _find_config_by_option_in_list(self, configs: List[Dict[str, Any]], option_name: str) -> Optional[Dict[str, Any]]:
-        """在配置列表中通过选项名查找"""
+        """Find configuration by option name in configuration list"""
         for config in configs:
             if config.get('short_opt') == option_name or config.get('long_opt') == option_name:
                 return config
         return None
     
     def _find_sub_config_globally(self, option_name: str) -> Optional[Dict[str, Any]]:
-        """全局查找子参数配置"""
+        """Find sub-parameter configuration globally"""
         for config in self.arg_parse_config:
             for sub_config in config.get('sub_args', []):
                 if (sub_config.get('short_opt') == option_name or 
@@ -247,37 +247,37 @@ class GetoptParser:
         return None
     
     def _find_cmd_arg_config(self) -> Optional[Dict[str, Any]]:
-        """查找 is_cmd_arg 配置"""
+        """Find is_cmd_arg configuration"""
         for config in self.arg_parse_config:
             if config.get('is_cmd_arg', False):
                 return config
         return None
     
     def _expand_combined_args(self, args: List[str]) -> List[str]:
-        """展开组合参数 - 支持重复选项"""
+        """Expand combined arguments - support repeated options"""
         expanded = []
         for arg in args:
-            # 处理 -Syyu 这样的组合参数
+            # Handle combined arguments like -Syyu
             if (arg.startswith('-') and 
                 len(arg) > 2 and 
                 not arg.startswith('--') and
-                arg[1] != '-'):  # 确保不是双横线
+                arg[1] != '-'):  # Ensure not double dash
                 
-                # 检查是否有重复字符
+                # Check for repeated characters
                 chars = list(arg[1:])
                 expanded_chars = []
                 
-                # 统计每个字符的出现次数
+                # Count occurrences of each character
                 char_count = {}
                 for char in chars:
                     char_count[char] = char_count.get(char, 0) + 1
                 
-                # 根据出现次数生成对应的参数
+                # Generate corresponding arguments based on occurrence count
                 for char, count in char_count.items():
                     if count == 1:
                         expanded_chars.append(f'-{char}')
                     else:
-                        # 重复字符，生成多个参数
+                        # Repeated character, generate multiple arguments
                         for _ in range(count):
                             expanded_chars.append(f'-{char}')
                 

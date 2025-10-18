@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ActMap 主程序入口
+ActMap Main Program Entry
 """
 
 import click
@@ -8,7 +8,7 @@ from actmap.cli import cli
 
 
 def main():
-    """主函数"""
+    """Main function"""
     cli()
 
 

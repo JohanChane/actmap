@@ -3,7 +3,7 @@
 import sys
 import os
 
-# 添加项目根目录到 Python 路径
+# Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from actmap.core.actmap import ActMap
@@ -11,89 +11,89 @@ from actmap.log import set_debug, info, success, error, debug
 
 
 def test_basic():
-    """基础功能测试"""
+    """Basic functionality test"""
     config_path = os.path.join(os.path.dirname(__file__), 'config.toml')
-    info(f"🧪 使用配置文件: {config_path}")
+    info(f"🧪 Using configuration file: {config_path}")
     print("=" * 60)
     
     try:
-        # 设置调试模式
+        # Set debug mode
         set_debug(True)
         
-        # 测试 ActMap 功能
+        # Test ActMap functionality
         actmap = ActMap(config_path)
-        actmap.set_debug(True)  # 启用 ActMap 的调试模式
+        actmap.set_debug(True)  # Enable ActMap debug mode
         
-        # 测试基本功能
-        print("✅ ActMap 初始化成功")
-        print(f"✅ 支持的动作: {actmap.get_supported_actions()}")
-        print(f"✅ 支持的接口: {actmap.get_supported_interfaces()}")
+        # Test basic functionality
+        print("✅ ActMap initialization successful")
+        print(f"✅ Supported actions: {actmap.get_supported_actions()}")
+        print(f"✅ Supported interfaces: {actmap.get_supported_interfaces()}")
         
-        # 基础测试用例 - 更新期望值
+        # Basic test cases - updated expected values
         test_cases = [
-            # (接口, 完整参数, 期望动作, 描述)
-            ("pacman", ["pacman", "vim"], "install", "基本安装"),
-            ("pacman", ["pacman", "-S", "vim"], "install", "带选项安装"),
-            ("pacman", ["pacman", "-Ss", "vim"], "search", "搜索包"),
-            ("pacman", ["pacman", "-s", "vim", "-S"], "search", "逆序搜索"),
-            ("pacman", ["pacman", "-Ss"], None, "不指定参数"),  # 修改：期望 None
-            ("pacman", ["pacman", "-S"], None, "不指定参数"),   # 修改：期望 None
-            ("pacman", ["pacman", "-Qs", "vim"], "search", "查询搜索"),
-            ("pacman", ["pacman", "-h"], "help", "帮助"),
+            # (interface, full_args, expected_action, description)
+            ("pacman", ["pacman", "vim"], "install", "Basic installation"),
+            ("pacman", ["pacman", "-S", "vim"], "install", "Installation with options"),
+            ("pacman", ["pacman", "-Ss", "vim"], "search", "Search package"),
+            ("pacman", ["pacman", "-s", "vim", "-S"], "search", "Reverse order search"),
+            ("pacman", ["pacman", "-Ss"], None, "No parameters specified"),  # Modified: expect None
+            ("pacman", ["pacman", "-S"], None, "No parameters specified"),   # Modified: expect None
+            ("pacman", ["pacman", "-Qs", "vim"], "search", "Query search"),
+            ("pacman", ["pacman", "-h"], "help", "Help"),
             
-            ("apt", ["apt", "install", "vim"], "install", "APT安装"),
-            ("apt", ["apt", "install"], None, "不指定参数"),    # 修改：期望 None
-            ("apt", ["apt", "search", "vim"], "search", "APT搜索"),
-            ("apt", ["apt", "search"], None, "不指定参数"),     # 修改：期望 None
-            ("apt", ["apt", "--help"], "help", "APT帮助"),
+            ("apt", ["apt", "install", "vim"], "install", "APT installation"),
+            ("apt", ["apt", "install"], None, "No parameters specified"),    # Modified: expect None
+            ("apt", ["apt", "search", "vim"], "search", "APT search"),
+            ("apt", ["apt", "search"], None, "No parameters specified"),     # Modified: expect None
+            ("apt", ["apt", "--help"], "help", "APT help"),
         ]
         
-        print("\n🧪 基础功能测试:")
+        print("\n🧪 Basic functionality tests:")
         passed_basic = 0
         total_basic = len(test_cases)
         
         for interface, full_args, expected_action, description in test_cases:
-            print(f"\n  测试: {' '.join(full_args)} - {description}")
+            print(f"\n  Test: {' '.join(full_args)} - {description}")
             
             try:
-                # 解析参数 - 传递完整参数（包含命令名）
+                # Parse arguments - pass complete arguments (including command name)
                 parse_result = actmap.parse_arguments(interface, full_args)
                 
-                # 检测动作
+                # Detect action
                 action = actmap.detect_action(interface, parse_result)
                 
-                # 验证结果
+                # Verify result
                 if action == expected_action:
-                    print(f"     ✅ 动作检测正确: {action}")
+                    print(f"     ✅ Action detection correct: {action}")
                     
-                    # 测试命令映射（只有有动作时才测试）
+                    # Test command mapping (only when action exists)
                     if action:
                         target = "apt" if interface == "pacman" else "pacman"
                         mapped_cmd = actmap.map_command(interface, target, action, parse_result)
-                        print(f"     🔄 映射到 {target}: {mapped_cmd}")
+                        print(f"     🔄 Mapped to {target}: {mapped_cmd}")
                     else:
-                        print(f"     ⏭️  无动作，跳过映射测试")
+                        print(f"     ⏭️  No action, skipping mapping test")
                     
                     passed_basic += 1
                 else:
-                    print(f"     ❌ 动作检测错误: 期望 {expected_action}, 得到 {action}")
+                    print(f"     ❌ Action detection error: expected {expected_action}, got {action}")
                     
             except Exception as e:
-                print(f"     ❌ 测试失败: {e}")
+                print(f"     ❌ Test failed: {e}")
         
         print("\n" + "=" * 60)
-        print(f"📊 基础测试结果: {passed_basic}/{total_basic} 通过")
+        print(f"📊 Basic test results: {passed_basic}/{total_basic} passed")
         
         if passed_basic == total_basic:
-            print("🎉 所有基础测试通过！")
+            print("🎉 All basic tests passed!")
         else:
-            print("❌ 部分基础测试失败")
+            print("❌ Some basic tests failed")
         
         return passed_basic == total_basic
         
     except Exception as e:
-        error(f"❌ 基础测试失败: {e}")
-        debug(f"详细错误: {str(e)}")
+        error(f"❌ Basic test failed: {e}")
+        debug(f"Detailed error: {str(e)}")
         return False
 
 
