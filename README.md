@@ -6,10 +6,6 @@ A powerful command-line tool for intelligently mapping commands between differen
 
 [中文](./README_ZH.md)
 
-## Project Status
-
-Currently under development, it's a work in progress. Many things are not yet finalized, and significant changes may occur later.
-
 ## 🌟 Features
 
 - **Multi-Package Manager Support**: pacman, apt, dnf, brew, zypper
@@ -43,6 +39,13 @@ if command -v actmap-execute &>/dev/null; then
 fi
 ```
 
+Alias (optional):
+
+```sh
+alias am="actmap"
+alias ame="actmap-execute"
+```
+
 ### Basic Usage
 
 init-config and set default target actmap:
@@ -59,11 +62,11 @@ actmap map (automatically detects commands after map to map to target actmap):
 
 ```sh
 # Map apt command to target actmap
-actmap map -- apt install vim git
+actmap map apt install vim git
 # If target_actmap is "pacman", maps to: pacman -S vim git
 
 # Map pacman command to apt actmap
-actmap -t apt map -- pacman -S vim git  # Maps to: apt install vim git
+actmap -t apt map pacman -S vim git  # Maps to: apt install vim git
 
 # View mapping from pacman actmap to apt actmap
 actmap --output-actmap pacman apt
@@ -79,22 +82,22 @@ actmap act install vim git
 actmap-execute (execute mapped commands) map:
 
 ```sh
-actmap-execute map -- pacman -S vim git
+actmap-execute map pacman -S vim git
 
 # Interactive execution (recommended for dangerous operations)
-actmap-execute -i map -- pacman -Rns vim
+actmap-execute -i map pacman -Rns vim
 
 # Force execution (skip confirmation)
-actmap-execute -f map -- apt remove python3
+actmap-execute -f map apt remove python3
 ```
 
 actmap-execute act:
 
 ```sh
-actmap-execute install vim git
+actmap-execute act install vim git
 
 # If there's an action grep_log: cat foo.log bar.log | grep -i '{log_level}' | grep -i '{log_msg}'
-actmap-execute -- grep_log foo.log bar.log == ERROR == write
+actmap-execute act grep_log foo.log bar.log == ERROR == write
 # Will execute: cat foo.log bar.log | grep -i 'ERROR' | grep -i 'write'
 ```
 
@@ -120,9 +123,9 @@ actmap-generate --list-actmaps
 
 ```sh
 # debian
-actmap map -- apt install vim git
+actmap map apt install vim git
 # arch
-actmap map -- pacman -S search vim git
+actmap map pacman -S search vim git
 ```
 
 ### Use Your Familiar Action to Install vim git
@@ -136,12 +139,35 @@ actmap act install vim git
 
 ```sh
 # If you forget pip command to show package info, you can use any familiar way to execute
-actmap-execute -t pip map -- pacman -Si <pkg>   # Will map to: pip show <pkg>
+actmap-execute -t pip map pacman -Si <pkg>   # Will map to: pip show <pkg>
 # OR
-actmap-execute -t pip map -- brew info <pkg>
+actmap-execute -t pip map brew info <pkg>
 ```
 
-## output-actmap examples
+## `actmap-generate` actmap Configuration
+
+### Configured actmaps
+
+```sh
+actmap --list-actmaps
+```
+
+```
+ℹ️ INFO: 📦 Package managers in current configuration:
+  ✅ apt - supports 15 actions
+  ✅ brew - supports 15 actions
+  ✅ cargo - supports 8 actions
+  ✅ chocolatey - supports 15 actions
+  ✅ dnf - supports 15 actions
+  ✅ npm - supports 8 actions
+  ✅ pacman - supports 15 actions
+  ✅ pip - supports 10 actions
+  ✅ scoop - supports 15 actions
+  ✅ winget - supports 15 actions
+  ✅ zypper - supports 15 actions
+```
+
+### output-actmap examples
 
 pacman -> apt:
 
@@ -151,23 +177,51 @@ actmap --output-actmap pacman apt
 
 ```
 ================================================================================
-状态   动作              源命令                       目标命令                          
+Status Action          Source Command            Target Command
 --------------------------------------------------------------------------------
-✅    install         pacman -S {pkgs}          apt install {pkgs}            
-✅    remove          pacman -R {pkgs}          apt remove {pkgs}             
-✅    search          pacman -Ss {pkgs}         apt search {pkgs}             
-✅    update          pacman -Sy                apt update                    
-✅    upgrade         pacman -Syu               apt upgrade                   
-✅    force_update    pacman -Syy               apt update --refresh-all      
+✅    install         pacman -S {pkgs}          apt install {pkgs}
+✅    remove          pacman -R {pkgs}          apt remove {pkgs}
+✅    search          pacman -Ss {pkgs}         apt search {pkgs}
+✅    update          pacman -Sy                apt update
+✅    upgrade         pacman -Syu               apt upgrade
+✅    force_update    pacman -Syy               apt update --refresh-all
 ✅    force_upgrade   pacman -Syyu              apt update --refresh-all && apt upgrade
-✅    info            pacman -Si {pkgs}         apt show {pkgs}               
-✅    list_installed  pacman -Q                 apt list --installed          
-✅    clean           pacman -Sc                apt autoclean                 
-✅    help            pacman -h                 apt --help                    
-✅    list_files      pacman -Ql {pkgs}         dpkg -L {pkgs}                
-✅    find_file_owner pacman -Qo {files}        dpkg -S {files}               
-✅    find_file_owner_remote pacman -F {files}         apt-file search {files}       
-✅    download_source asp export {pkgs}         apt source {pkgs}             
+✅    info            pacman -Si {pkgs}         apt show {pkgs}
+✅    list_installed  pacman -Q                 apt list --installed
+✅    clean           pacman -Sc                apt autoclean
+✅    help            pacman -h                 apt --help
+✅    list_files      pacman -Ql {pkgs}         dpkg -L {pkgs}
+✅    find_file_owner pacman -Qo {files}        dpkg -S {files}
+✅    find_file_owner_remote pacman -F {files}         apt-file search {files}
+✅    download_source asp export {pkgs}         apt source {pkgs}
+================================================================================
+```
+
+pacman -> pip:
+
+```sh
+actmap --output-actmap pacman pip
+```
+
+```
+================================================================================
+Status Action          Source Command            Target Command
+--------------------------------------------------------------------------------
+✅    install         pacman -S {pkgs}          pip install {pkgs}
+✅    remove          pacman -R {pkgs}          pip uninstall {pkgs}
+✅    search          pacman -Ss {pkgs}         pip search {pkgs}
+✅    update          pacman -Sy                pip install --upgrade pip
+✅    upgrade         pacman -Syu               pip install --upgrade {pkgs}
+❌    force_update    pacman -Syy               Not supported
+❌    force_upgrade   pacman -Syyu              Not supported
+✅    info            pacman -Si {pkgs}         pip show {pkgs}
+✅    list_installed  pacman -Q                 pip list
+✅    clean           pacman -Sc                pip cache purge
+✅    help            pacman -h                 pip --help
+❌    list_files      pacman -Ql {pkgs}         Not supported
+❌    find_file_owner pacman -Qo {files}        Not supported
+❌    find_file_owner_remote pacman -F {files}         Not supported
+✅    download_source asp export {pkgs}         pip download {pkgs}
 ================================================================================
 ```
 
