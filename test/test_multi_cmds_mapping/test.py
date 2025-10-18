@@ -3,7 +3,7 @@
 import sys
 import os
 
-# 添加项目根目录到 Python 路径
+# Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from actmap.core.actmap import ActMap
@@ -11,57 +11,57 @@ from actmap.log import set_debug, info, success, error, debug
 
 
 def test_dnf_rpm_pacman_mapping():
-    """测试 DNF/RPM 和 Pacman 之间的复杂命令映射"""
+    """Test complex command mapping between DNF/RPM and Pacman"""
     config_path = os.path.join(os.path.dirname(__file__), 'config.toml')
-    info(f"🧪 使用配置文件: {config_path}")
+    info(f"🧪 Using configuration file: {config_path}")
     print("=" * 80)
     
     try:
-        # 设置调试模式
+        # Set debug mode
         set_debug(True)
         
-        # 测试 ActMap 功能
+        # Test ActMap functionality
         actmap = ActMap(config_path)
         actmap.set_debug(True)
         
-        # 测试基本功能
-        print("✅ ActMap 初始化成功")
-        print(f"✅ 支持的动作: {actmap.get_supported_actions()}")
-        print(f"✅ 支持的接口: {actmap.get_supported_interfaces()}")
+        # Test basic functionality
+        print("✅ ActMap initialization successful")
+        print(f"✅ Supported actions: {actmap.get_supported_actions()}")
+        print(f"✅ Supported interfaces: {actmap.get_supported_interfaces()}")
         
-        # 复杂映射测试用例 - 专注于文件相关操作
-        # 列说明:
-        # 第1列: 源接口 - 使用哪个包管理器的配置解析命令
-        # 第2列: 源命令 - 实际的命令行参数列表
-        # 第3列: 目标接口 - 映射到哪个包管理器  
-        # 第4列: 期望参数 - 期望在目标命令中出现的参数值
-        # 第5列: 描述 - 测试用例的人类可读描述
+        # Complex mapping test cases - focusing on file-related operations
+        # Column descriptions:
+        # Column 1: Source interface - which package manager's configuration to use for parsing commands
+        # Column 2: Source command - actual command line arguments list
+        # Column 3: Target interface - which package manager to map to
+        # Column 4: Expected parameters - parameter values expected to appear in target command
+        # Column 5: Description - human-readable description of test case
         test_cases = [
-            # ==================== DNF/RPM → Pacman 映射 ====================
-            # 文件相关操作 - 重点测试参数映射
-            ("dnf", ["dnf", "provides", "/usr/bin/vim"], "pacman", ["/usr/bin/vim"], "DNF远程文件查找→Pacman"),
-            ("dnf", ["rpm", "-qf", "/usr/bin/bash"], "pacman", ["/usr/bin/bash"], "RPM本地文件查找→Pacman"),
-            ("dnf", ["rpm", "-ql", "vim"], "pacman", ["vim"], "RPM文件列表→Pacman"),
-            ("dnf", ["rpm", "-qi", "git"], "pacman", ["git"], "RPM包信息→Pacman"),
-            ("dnf", ["dnf", "search", "editor"], "pacman", ["editor"], "DNF搜索→Pacman"),
-            ("dnf", ["dnf", "info", "kernel"], "pacman", ["kernel"], "DNF包信息→Pacman"),
+            # ==================== DNF/RPM → Pacman mapping ====================
+            # File-related operations - focus on parameter mapping
+            ("dnf", ["dnf", "provides", "/usr/bin/vim"], "pacman", ["/usr/bin/vim"], "DNF remote file lookup → Pacman"),
+            ("dnf", ["rpm", "-qf", "/usr/bin/bash"], "pacman", ["/usr/bin/bash"], "RPM local file lookup → Pacman"),
+            ("dnf", ["rpm", "-ql", "vim"], "pacman", ["vim"], "RPM file list → Pacman"),
+            ("dnf", ["rpm", "-qi", "git"], "pacman", ["git"], "RPM package info → Pacman"),
+            ("dnf", ["dnf", "search", "editor"], "pacman", ["editor"], "DNF search → Pacman"),
+            ("dnf", ["dnf", "info", "kernel"], "pacman", ["kernel"], "DNF package info → Pacman"),
             
-            # ==================== Pacman → DNF/RPM 映射 ====================
-            # 文件相关操作 - 重点测试参数映射
-            ("pacman", ["pacman", "-F", "/usr/bin/gcc"], "dnf", ["/usr/bin/gcc"], "Pacman远程文件查找→DNF"),
-            ("pacman", ["pacman", "-Qo", "/usr/bin/python"], "dnf", ["/usr/bin/python"], "Pacman本地文件查找→RPM"),
-            ("pacman", ["pacman", "-Ql", "git"], "dnf", ["git"], "Pacman文件列表→RPM"),
-            ("pacman", ["pacman", "-Si", "firefox"], "dnf", ["firefox"], "Pacman包信息→DNF"),
-            ("pacman", ["pacman", "-Ss", "browser"], "dnf", ["browser"], "Pacman搜索→DNF"),
+            # ==================== Pacman → DNF/RPM mapping ====================
+            # File-related operations - focus on parameter mapping
+            ("pacman", ["pacman", "-F", "/usr/bin/gcc"], "dnf", ["/usr/bin/gcc"], "Pacman remote file lookup → DNF"),
+            ("pacman", ["pacman", "-Qo", "/usr/bin/python"], "dnf", ["/usr/bin/python"], "Pacman local file lookup → RPM"),
+            ("pacman", ["pacman", "-Ql", "git"], "dnf", ["git"], "Pacman file list → RPM"),
+            ("pacman", ["pacman", "-Si", "firefox"], "dnf", ["firefox"], "Pacman package info → DNF"),
+            ("pacman", ["pacman", "-Ss", "browser"], "dnf", ["browser"], "Pacman search → DNF"),
         ]
         
-        print("\n🧪 DNF/RPM ↔ Pacman 文件操作映射测试:")
-        print("📋 列说明:")
-        print("  第1列: 源接口 (解析器选择)")
-        print("  第2列: 源命令 (实际参数)") 
-        print("  第3列: 目标接口 (映射目标)")
-        print("  第4列: 期望参数 (验证值)")
-        print("  第5列: 描述")
+        print("\n🧪 DNF/RPM ↔ Pacman file operation mapping test:")
+        print("📋 Column descriptions:")
+        print("  Column 1: Source interface (parser selection)")
+        print("  Column 2: Source command (actual parameters)") 
+        print("  Column 3: Target interface (mapping target)")
+        print("  Column 4: Expected parameters (validation values)")
+        print("  Column 5: Description")
         print("-" * 80)
         
         passed = 0
@@ -69,58 +69,58 @@ def test_dnf_rpm_pacman_mapping():
         
         for source_interface, source_args, target_interface, expected_values, description in test_cases:
             print(f"\n  🧪 {description}")
-            print(f"     📥 输入: {' '.join(source_args)}")
-            print(f"     🎯 目标: {target_interface}")
+            print(f"     📥 Input: {' '.join(source_args)}")
+            print(f"     🎯 Target: {target_interface}")
             
             try:
-                # 解析源命令参数
+                # Parse source command parameters
                 parse_result = actmap.parse_arguments(source_interface, source_args)
                 
-                # 检测动作
+                # Detect action
                 action = actmap.detect_action(source_interface, parse_result)
                 
                 if action:
-                    print(f"     🔍 检测动作: {action}")
+                    print(f"     🔍 Detected action: {action}")
                     
-                    # 执行命令映射
+                    # Execute command mapping
                     mapped_command = actmap.map_command(source_interface, target_interface, action, parse_result)
-                    print(f"     🔄 映射命令: {mapped_command}")
+                    print(f"     🔄 Mapped command: {mapped_command}")
                     
-                    # 检测参数是否生效
-                    success = True
+                    # Check if parameters are effective
+                    test_success = True
                     missing_values = []
                     
-                    # 检查期望的值是否出现在映射后的命令中
+                    # Check if expected values appear in mapped command
                     for value in expected_values:
                         if value not in mapped_command:
                             missing_values.append(value)
-                            success = False
+                            test_success = False
                     
-                    if success:
-                        print(f"     ✅ 验证成功: 所有参数正确映射")
+                    if test_success:
+                        print(f"     ✅ Validation successful: all parameters correctly mapped")
                         passed += 1
                     else:
-                        print(f"     ❌ 验证失败: 参数 {missing_values} 未出现在目标命令中")
+                        print(f"     ❌ Validation failed: parameters {missing_values} not found in target command")
                         
                 else:
-                    print(f"     ❌ 动作检测失败")
-                    print(f"       解析结果: {parse_result}")
+                    print(f"     ❌ Action detection failed")
+                    print(f"       Parse result: {parse_result}")
                     
             except Exception as e:
-                print(f"     ❌ 测试异常: {e}")
+                print(f"     ❌ Test exception: {e}")
         
         print("\n" + "=" * 80)
-        print(f"📊 测试结果: {passed}/{total} 通过")
+        print(f"📊 Test results: {passed}/{total} passed")
         
         if passed == total:
-            print("🎉 所有文件操作映射测试通过！")
+            print("🎉 All file operation mapping tests passed!")
         else:
-            print("❌ 部分测试失败")
+            print("❌ Some tests failed")
         
         return passed == total
         
     except Exception as e:
-        error(f"❌ 文件操作映射测试失败: {e}")
+        error(f"❌ File operation mapping test failed: {e}")
         import traceback
         traceback.print_exc()
         return False

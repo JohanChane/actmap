@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-命令行接口模块
+Command line interface module
 """
 
 import click
@@ -13,7 +13,7 @@ from actmap.log import (
 from actmap.core.actmap import ActMap
 
 def get_available_actions(ctx, param, incomplete):
-    """完全自包含的补全函数 - 显示完整命令格式"""
+    """Fully self-contained completion function - show complete command format"""
     from click.shell_completion import CompletionItem
     try:
         comp_env = os.environ.get('_ACTMAP_COMPLETE', '')
@@ -36,20 +36,20 @@ def get_available_actions(ctx, param, incomplete):
             if incomplete not in action_name:
                 continue
                 
-            # 获取动作描述
-            description = action_config.get('description', '动作')
+            # Get action description
+            description = action_config.get('description', 'Action')
             
-            # 获取默认目标的命令格式
+            # Get command format for default target
             target_config = action_config.get(default_target, {})
             cmd_format = target_config.get('cmd_format', '')
             
-            # 构建帮助信息
+            # Build help information
             if cmd_format:
                 help_text = f"{description} | {cmd_format}"
             else:
-                help_text = f"{description} | 无 {default_target} 命令格式"
+                help_text = f"{description} | No {default_target} command format"
             
-            # 创建补全项
+            # Create completion item
             completions.append(
                 CompletionItem(
                     action_name, 
@@ -64,54 +64,54 @@ def get_available_actions(ctx, param, incomplete):
 
 
 def _output_actmap_mappings(source_interface, target_interface, config_path, debug_mode):
-    """输出配置的映射关系"""
+    """Output configured mapping relationships"""
     try:
-        # 使用 ActMap 加载配置
+        # Use ActMap to load configuration
         if config_path:
             config_path = Path(config_path)
         else:
-            # 默认使用 XDG 配置目录
+            # Default to XDG config directory
             xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
             config_path = xdg_config_home
 
         actmap = ActMap(config_path)
         
-        # 获取支持的动作
+        # Get supported actions
         actions = actmap.get_supported_actions()
         
-        info(f"📋 映射配置: {source_interface} → {target_interface}")
+        info(f"📋 Mapping configuration: {source_interface} → {target_interface}")
         print("=" * 80)
         
-        # 表头
-        print(f"{'状态':<4} {'动作':<15} {'源命令':<25} {'目标命令':<30}")
+        # Table header
+        print(f"{'Status':<4} {'Action':<15} {'Source Command':<25} {'Target Command':<30}")
         print("-" * 80)
         
         supported_count = 0
         
         for action in actions:
-            # 检查源接口是否支持该动作
+            # Check if source interface supports this action
             action_config = actmap.config.get('actions', {}).get(action, {})
             source_supported = source_interface in action_config
             target_supported = target_interface in action_config
             
-            # 获取源命令格式
+            # Get source command format
             if source_supported:
-                source_cmd = action_config.get(source_interface, {}).get('cmd_format', '不支持')
+                source_cmd = action_config.get(source_interface, {}).get('cmd_format', 'Not supported')
             else:
-                source_cmd = "不支持"
+                source_cmd = "Not supported"
             
-            # 获取目标命令格式
+            # Get target command format
             if target_supported:
-                target_cmd = action_config.get(target_interface, {}).get('cmd_format', '不支持')
+                target_cmd = action_config.get(target_interface, {}).get('cmd_format', 'Not supported')
                 status = "✅"
                 supported_count += 1
             else:
-                target_cmd = "不支持"
+                target_cmd = "Not supported"
                 status = "❌"
             
             print(f"{status:<4} {action:<15} {source_cmd:<25} {target_cmd:<30}")
             
-            # 如果是调试模式，显示触发规则
+            # If in debug mode, show trigger rules
             if debug_mode:
                 source_config = actmap.config.get('action_interfaces', {}).get(source_interface, {})
                 triggers = source_config.get('triggers', {}).get('rules', [])
@@ -123,71 +123,71 @@ def _output_actmap_mappings(source_interface, target_interface, config_path, deb
                             params = condition.get('params', [])
                             if params:
                                 param_names = [p.get('name', '?') for p in params]
-                                print(f"   触发条件: {param_names}")
+                                print(f"   Trigger condition: {param_names}")
         
         print("=" * 80)
-        success(f"共找到 {supported_count}/{len(actions)} 个支持的映射")
+        success(f"Found {supported_count}/{len(actions)} supported mappings")
         
     except Exception as e:
-        error(f"输出映射配置失败: {e}")
+        error(f"Failed to output mapping configuration: {e}")
         if debug_mode:
             import traceback
-            debug_plain("堆栈跟踪:")
+            debug_plain("Stack trace:")
             debug_plain(traceback.format_exc())
 
 def get_source_interfaces(ctx, param, incomplete):
-    """获取可用的源包管理器接口列表"""
+    """Get available source package manager interface list"""
     return get_available_interfaces(ctx, param, incomplete)
 
 def get_target_interfaces(ctx, param, incomplete):
-    """获取可用的目标包管理器接口列表"""
+    """Get available target package manager interface list"""
     return get_available_interfaces(ctx, param, incomplete)
 
 @click.group(invoke_without_command=True)
-@click.option('-d', '--debug', 'debug_mode', is_flag=True, help='显示调试信息')
-@click.option('-t', '--target', help='目标包管理器', shell_complete=get_target_interfaces)
-@click.option('-s', '--source', help='源包管理器（当自动检测有歧义时使用）', shell_complete=get_source_interfaces)
-@click.option('--config', help='配置文件路径')
-@click.option('--output-actmap', nargs=2, help='输出配置的映射关系，例如: --output-actmap pacman apt')
-@click.option('--list-actmaps', is_flag=True, help='显示当前配置文件中已有的包管理器')
+@click.option('-d', '--debug', 'debug_mode', is_flag=True, help='Show debug information')
+@click.option('-t', '--target', help='Target package manager', shell_complete=get_target_interfaces)
+@click.option('-s', '--source', help='Source package manager (use when auto-detection is ambiguous)', shell_complete=get_source_interfaces)
+@click.option('--config', help='Configuration file path')
+@click.option('--output-actmap', nargs=2, help='Output mapping configuration, e.g.: --output-actmap pacman apt')
+@click.option('--list-actmaps', is_flag=True, help='Show available package managers in current config')
 @click.pass_context
 def cli(ctx, debug_mode, target, config, source, output_actmap, list_actmaps):
-    """ActMap - 智能命令映射工具
+    """ActMap - Intelligent Command Mapping Tool
     
-    将一种包管理器的命令映射到另一种包管理器。
+    Map commands from one package manager to another.
     
     \b
-    示例:
-        actmap --output-actmap pacman apt        # 输出映射配置
-        actmap --list-actmaps                    # 显示已有包管理器
-        actmap map -- apt install vim git        # 映射命令
-        actmap map apt install vim git           # 简写形式
-        actmap -t apt --debug map -- pacman -Syu # 指定目标和调试
+    Examples:
+        actmap --output-actmap pacman apt        # Output mapping configuration
+        actmap --list-actmaps                    # Show available package managers
+        actmap map -- apt install vim git        # Map command
+        actmap map apt install vim git           # Short form
+        actmap -t apt --debug map -- pacman -Syu # Specify target and debug
     """
-    # 确保子命令可以访问这些选项
+    # Ensure subcommands can access these options
     ctx.ensure_object(dict)
     ctx.obj['debug_mode'] = debug_mode
     ctx.obj['target'] = target
     ctx.obj['config'] = config
     
-    # 处理 --list-actmaps 选项
+    # Handle --list-actmaps option
     if list_actmaps and not ctx.invoked_subcommand:
         _list_actmaps_in_config(config, debug_mode)
         return
     
-    # 处理 --output-actmap 选项（如果没有子命令）
+    # Handle --output-actmap option (if no subcommand)
     if output_actmap and not ctx.invoked_subcommand:
         source_interface, target_interface = output_actmap
         _output_actmap_mappings(source_interface, target_interface, config, debug_mode)
         return
     
-    # 如果没有子命令也没有选项，显示帮助
+    # If no subcommand and no options, show help
     if not ctx.invoked_subcommand and not any([output_actmap, list_actmaps]):
         click.echo(ctx.get_help())
 
 
 def get_available_interfaces(ctx, param, incomplete):
-    """获取可用的包管理器接口列表用于补全"""
+    """Get available package manager interface list for completion"""
     from click.shell_completion import CompletionItem
     try:
         comp_env = os.environ.get('_ACTMAP_COMPLETE', '')
@@ -217,173 +217,173 @@ def get_available_interfaces(ctx, param, incomplete):
 @click.argument('command', nargs=-1, type=click.UNPROCESSED, shell_complete=get_available_interfaces)
 @click.pass_context
 def map(ctx, command):
-    """映射命令
+    """Map command
     """
 
-    # 从上下文获取选项
+    # Get options from context
     debug_mode = ctx.obj.get('debug_mode', False)
     target = ctx.obj.get('target')
     config = ctx.obj.get('config')
-    source = ctx.obj.get('source')  # 新增：获取源选项
+    source = ctx.obj.get('source')  # New: get source option
     
-    # 设置调试模式
+    # Set debug mode
     set_debug(debug_mode)
     
-    debug("🚀 开始命令映射")
-    debug(f"接收到的参数: {command}")
-    debug(f"调试模式: {debug_mode}")
-    debug(f"目标包管理器: {target}")
-    debug(f"源包管理器: {source}")  # 新增调试信息
-    debug(f"配置文件: {config}")
+    debug("🚀 Starting command mapping")
+    debug(f"Received arguments: {command}")
+    debug(f"Debug mode: {debug_mode}")
+    debug(f"Target package manager: {target}")
+    debug(f"Source package manager: {source}")  # New debug information
+    debug(f"Configuration file: {config}")
     
     try:
-        # 主要业务逻辑
+        # Main business logic
         if not command:
-            error("没有提供要映射的命令")
-            fatal("命令参数为空")
+            error("No command provided for mapping")
+            fatal("Command arguments are empty")
         
         cmd_str = ' '.join(command)
         cmd_parts = list(command)
         
         if debug_mode:
-            info(f"处理命令: {cmd_str}")
+            info(f"Processing command: {cmd_str}")
         
-        # 使用 ActMap 进行实际映射
+        # Use ActMap for actual mapping
         if config:
             config_path = Path(config)
         else:
-            # 默认使用 XDG 配置目录
+            # Default to XDG config directory
             xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
             config_path = xdg_config_home
 
         actmap = ActMap(config_path)
         actmap.set_debug(debug_mode)
         
-        # 检测源包管理器：优先使用用户指定的源
+        # Detect source package manager: prioritize user-specified source
         if source:
             source_interface = source
             if debug_mode:
-                progress(f"使用用户指定的源包管理器: {source_interface}")
+                progress(f"Using user-specified source package manager: {source_interface}")
         else:
             source_interface = actmap.detect_source_interface(cmd_parts)
             if not source_interface:
-                fatal("无法自动检测源包管理器，请使用 -s/--source 选项明确指定")
+                fatal("Cannot auto-detect source package manager, please use -s/--source option to specify explicitly")
         
-        # 使用完整参数进行解析（不移除命令名）
+        # Use full arguments for parsing (do not remove command name)
         args_to_parse = cmd_parts
 
         if debug_mode:
-            debug(f"完整解析参数: {args_to_parse}")
+            debug(f"Full parsing arguments: {args_to_parse}")
         
-        # 设置目标包管理器：优先级：CLI选项 > 配置文件默认值 > 默认值pacman
+        # Set target package manager: priority: CLI option > config file default > default pacman
         if target:
             target_interface = target.lower()
         else:
-            # 从配置文件中读取默认目标
+            # Read default target from configuration file
             config_data = actmap.config
             target_interface = config_data.get('config', {}).get('default_target_actmap', 'pacman')
         
         available_interfaces = actmap.get_supported_interfaces()
         if target_interface not in available_interfaces:
-            error(f"不支持的目标包管理器: {target_interface}")
-            error(f"配置文件中定义的包管理器: {', '.join(available_interfaces)}")
-            fatal("请使用配置文件中定义的包管理器")
+            error(f"Unsupported target package manager: {target_interface}")
+            error(f"Package managers defined in config: {', '.join(available_interfaces)}")
+            fatal("Please use package managers defined in configuration file")
         
         if debug_mode:
-            progress("正在解析命令...")
-            debug(f"源包管理器: {source_interface}")
-            debug(f"目标包管理器: {target_interface}")
-            debug("命令分词:", cmd_parts)
-            debug("解析参数:", args_to_parse)
-            step("正在查找映射规则...")
+            progress("Parsing command...")
+            debug(f"Source package manager: {source_interface}")
+            debug(f"Target package manager: {target_interface}")
+            debug("Command tokens:", cmd_parts)
+            debug("Parsing arguments:", args_to_parse)
+            step("Looking for mapping rules...")
         
-        # 解析参数
+        # Parse arguments
         parse_result = actmap.parse_arguments(source_interface, args_to_parse)
         
-        # 检测动作
+        # Detect action
         action = actmap.detect_action(source_interface, parse_result)
         
         if debug_mode:
             if action:
-                success(f"找到 {action} 操作")
+                success(f"Found {action} operation")
             else:
-                warning("未找到匹配的操作")
-                info("执行普通命令")
+                warning("No matching operation found")
+                info("Executing normal command")
         
-        # 执行映射
+        # Execute mapping
         if debug_mode:
-            step("执行命令映射...")
+            step("Executing command mapping...")
         
         mapped_command = actmap.map_command(source_interface, target_interface, action, parse_result)
         
         if mapped_command:
-            # 只输出映射后的命令
+            # Only output the mapped command
             print(mapped_command)
             if debug_mode:
-                success("操作执行成功")
+                success("Operation executed successfully")
         else:
             if debug_mode:
-                error("无法映射命令")
-                fatal("映射失败")
+                error("Cannot map command")
+                fatal("Mapping failed")
             else:
-                # 在非调试模式下，如果映射失败，静默退出
+                # In non-debug mode, if mapping fails, exit silently
                 return
         
     except Exception as e:
-        error(f"命令映射失败: {e}")
-        debug("详细错误信息:", str(e))
+        error(f"Command mapping failed: {e}")
+        debug("Detailed error information:", str(e))
         if debug_mode:
             import traceback
-            debug_plain("堆栈跟踪:")
+            debug_plain("Stack trace:")
             debug_plain(traceback.format_exc())
-        fatal("程序异常退出")
+        fatal("Program exited abnormally")
 
 def _list_actmaps_in_config(config_path, debug_mode):
-    """显示当前配置文件中已有的包管理器"""
+    """Show available package managers in current configuration file"""
     try:
-        # 使用 ActMap 加载配置
+        # Use ActMap to load configuration
         if config_path:
             config_path = Path(config_path)
         else:
-            # 默认使用 XDG 配置目录
+            # Default to XDG config directory
             xdg_config_home = Path.home() / '.config' / 'actmap' / 'config.toml'
             config_path = xdg_config_home
 
         actmap = ActMap(config_path)
         
-        # 获取配置文件中定义的包管理器
+        # Get package managers defined in config file
         action_interfaces = actmap.config.get('action_interfaces', {})
         available_actmaps = list(action_interfaces.keys())
         
         if not available_actmaps:
-            info("当前配置文件中没有定义包管理器")
+            info("No package managers defined in current configuration file")
             return
         
-        info("📦 当前配置文件中的包管理器:")
+        info("📦 Package managers in current configuration:")
         for actmap_name in sorted(available_actmaps):
-            # 检查是否有对应的动作定义
+            # Check if there are corresponding action definitions
             actions_with_this_actmap = []
             for action_name, action_config in actmap.config.get('actions', {}).items():
                 if actmap_name in action_config:
                     actions_with_this_actmap.append(action_name)
             
             if actions_with_this_actmap:
-                print(f"  ✅ {actmap_name} - 支持 {len(actions_with_this_actmap)} 个动作")
+                print(f"  ✅ {actmap_name} - supports {len(actions_with_this_actmap)} actions")
             else:
-                print(f"  ⚠️  {actmap_name} - 无动作定义")
+                print(f"  ⚠️  {actmap_name} - no action definitions")
         
-        # 显示默认目标
+        # Show default target
         default_target = actmap.config.get('config', {}).get('default_target_actmap')
         if default_target:
-            print(f"\n🎯 默认目标包管理器: {default_target}")
+            print(f"\n🎯 Default target package manager: {default_target}")
         
-        print(f"\n💡 使用 'actmap --output-actmap <源> <目标>' 查看具体映射关系")
+        print(f"\n💡 Use 'actmap --output-actmap <source> <target>' to view specific mappings")
         
     except Exception as e:
-        error(f"读取配置文件失败: {e}")
+        error(f"Failed to read configuration file: {e}")
         if debug_mode:
             import traceback
-            debug_plain("堆栈跟踪:")
+            debug_plain("Stack trace:")
             debug_plain(traceback.format_exc())
 
 @click.command()
@@ -391,30 +391,30 @@ def _list_actmaps_in_config(config_path, debug_mode):
 @click.argument('params', nargs=-1)
 @click.pass_context
 def act(ctx, action_name, params):
-    """根据动作来映射命令
+    """Map commands based on specified action
     
     \b
-    示例:
-        actmap act install vim git              # 安装包
-        actmap act search python == editor      # 搜索包 (使用 == 分隔参数)
-        actmap act update                       # 更新数据库  
-        actmap act list_installed               # 列出已安装包
+    Examples:
+        actmap act install vim git              # Install packages
+        actmap act search python == editor      # Search packages (use == to separate parameters)
+        actmap act update                       # Update database  
+        actmap act list_installed               # List installed packages
     """
-    # 现有的 act 函数实现保持不变
+    # Existing act function implementation remains unchanged
     debug_mode = ctx.obj.get('debug_mode', False)
     target = ctx.obj.get('target')
     config = ctx.obj.get('config')
     
     set_debug(debug_mode)
     
-    debug("🚀 开始直接动作执行")
-    debug(f"动作名称: {action_name}")
-    debug(f"参数: {params}")
-    debug(f"目标包管理器: {target}")
-    debug(f"配置文件: {config}")
+    debug("🚀 Starting direct action execution")
+    debug(f"Action name: {action_name}")
+    debug(f"Parameters: {params}")
+    debug(f"Target package manager: {target}")
+    debug(f"Configuration file: {config}")
         
     try:
-        # 使用 ActMap 执行动作
+        # Use ActMap to execute action
         if config:
             config_path = Path(config)
         else:
@@ -424,93 +424,93 @@ def act(ctx, action_name, params):
         actmap = ActMap(config_path)
         actmap.set_debug(debug_mode)
         
-        # 设置目标包管理器
+        # Set target package manager
         if target:
             target_interface = target.lower()
         else:
             config_data = actmap.config
             target_interface = config_data.get('config', {}).get('default_target_actmap', 'pacman')
         
-        # 检查动作是否支持
+        # Check if action is supported
         supported_actions = actmap.get_supported_actions()
         if action_name not in supported_actions:
-            error(f"不支持的动作: {action_name}")
-            error(f"支持的动作: {', '.join(supported_actions)}")
-            fatal("请使用支持的动作名称")
+            error(f"Unsupported action: {action_name}")
+            error(f"Supported actions: {', '.join(supported_actions)}")
+            fatal("Please use supported action names")
         
-        # 构建解析结果
+        # Build parse result
         parse_result = {
             'parsed_kwargs': {},
             'present_params': {},
             'detected_command': None
         }
         
-        # 根据动作类型处理参数
+        # Process parameters based on action type
         action_config = actmap.config.get('actions', {}).get(action_name, {})
         action_args = action_config.get('args', [])
         
         if debug_mode:
-            debug(f"动作参数定义: {action_args}")
+            debug(f"Action parameter definitions: {action_args}")
         
-        # 参数解析逻辑：按顺序分配，遇到 == 切换到下一个参数
+        # Parameter parsing logic: assign in order, switch to next parameter when encountering ==
         remaining_params = list(params)
         parse_result['parsed_kwargs'] = {}
         
         for i, arg_name in enumerate(action_args):
             current_arg_values = []
             
-            # 从剩余参数中取，直到遇到 == 或没有更多参数
+            # Take from remaining parameters until encountering == or no more parameters
             while remaining_params:
                 param = remaining_params[0]
                 if param == '==':
-                    # 遇到分隔符，移除它并切换到下一个参数
+                    # Encountered separator, remove it and switch to next parameter
                     remaining_params.pop(0)
                     break
                 else:
-                    # 普通参数，添加到当前参数值
+                    # Normal parameter, add to current parameter value
                     current_arg_values.append(remaining_params.pop(0))
             
             parse_result['parsed_kwargs'][arg_name] = current_arg_values
         
         if debug_mode:
-            debug(f"参数解析结果: {parse_result['parsed_kwargs']}")
-            debug(f"剩余未处理的参数: {remaining_params}")
+            debug(f"Parameter parsing result: {parse_result['parsed_kwargs']}")
+            debug(f"Remaining unprocessed parameters: {remaining_params}")
         
-        # 检查必需参数是否都有值
+        # Check if all required parameters have values
         missing_args = []
         for arg_name in action_args:
             if not parse_result['parsed_kwargs'][arg_name]:
                 missing_args.append(arg_name)
         
         if missing_args:
-            error(f"缺少必需参数: {', '.join(missing_args)}")
-            error(f"使用方法: actmap act {action_name} [参数1] == [参数2] == ...")
-            fatal("请提供所有必需的参数")
+            error(f"Missing required parameters: {', '.join(missing_args)}")
+            error(f"Usage: actmap act {action_name} [parameter1] == [parameter2] == ...")
+            fatal("Please provide all required parameters")
         
-        # 如果有剩余参数且没有更多的配置参数，警告用户
+        # If there are remaining parameters and no more configuration parameters, warn user
         if remaining_params and debug_mode:
-            warning(f"有未使用的参数: {remaining_params}")
+            warning(f"Unused parameters: {remaining_params}")
         
-        # 执行映射
+        # Execute mapping
         mapped_command = actmap.map_command_direct(action_name, target_interface, parse_result)
         
         if mapped_command:
             print(mapped_command)
             if debug_mode:
-                success("动作执行成功")
+                success("Action executed successfully")
         else:
-            error("无法映射命令")
-            fatal("映射失败")
+            error("Cannot map command")
+            fatal("Mapping failed")
         
     except Exception as e:
-        error(f"动作执行失败: {e}")
+        error(f"Action execution failed: {e}")
         if debug_mode:
             import traceback
-            debug_plain("堆栈跟踪:")
+            debug_plain("Stack trace:")
             debug_plain(traceback.format_exc())
-        fatal("程序异常退出")
+        fatal("Program exited abnormally")
         
-# 添加子命令
+# Add subcommands
 cli.add_command(map)
 cli.add_command(act)
 

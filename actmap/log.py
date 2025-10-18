@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-增强版日志模块 - 带颜色输出，根据调试模式控制显示
+Enhanced logging module - colored output, controlled by debug mode
 """
 
 import sys
 from typing import Any
 
-# 颜色代码
+# Color codes
 COLORS = {
     'red': '\033[91m',
     'green': '\033[92m', 
@@ -18,83 +18,83 @@ COLORS = {
     'reset': '\033[0m'
 }
 
-# 全局调试标志
+# Global debug flag
 _debug_mode = False
 
 
 def set_debug(debug: bool):
-    """设置调试模式"""
+    """Set debug mode"""
     global _debug_mode
     _debug_mode = debug
 
 
 def is_debug() -> bool:
-    """返回当前是否是调试模式"""
+    """Return whether currently in debug mode"""
     return _debug_mode
 
 
 def colored(text: str, color: str) -> str:
-    """给文本添加颜色"""
+    """Add color to text"""
     return f"{COLORS.get(color, '')}{text}{COLORS['reset']}"
 
 
 def debug(*args: Any, **kwargs: Any):
-    """调试信息 - 只在调试模式下显示（青色）"""
+    """Debug information - only shown in debug mode (cyan)"""
     if _debug_mode:
         message = " ".join(str(arg) for arg in args)
         print(colored("🐛 DEBUG:", "cyan"), colored(message, "cyan"), **kwargs)
 
 
 def info(*args: Any, **kwargs: Any):
-    """普通信息 - 始终显示（蓝色）"""
+    """General information - always shown (blue)"""
     message = " ".join(str(arg) for arg in args)
     print(colored("ℹ️ INFO:", "blue"), colored(message, "blue"), **kwargs)
 
 
 def success(*args: Any, **kwargs: Any):
-    """成功信息 - 始终显示（绿色）"""
+    """Success information - always shown (green)"""
     message = " ".join(str(arg) for arg in args)
     print(colored("✅ SUCCESS:", "green"), colored(message, "green"), **kwargs)
 
 
 def warning(*args: Any, **kwargs: Any):
-    """警告信息 - 始终显示（黄色）"""
+    """Warning information - always shown (yellow)"""
     message = " ".join(str(arg) for arg in args)
     print(colored("⚠️ WARNING:", "yellow"), colored(message, "yellow"), **kwargs, file=sys.stderr)
 
 
 def error(*args: Any, **kwargs: Any):
-    """错误信息 - 始终显示（红色）"""
+    """Error information - always shown (red)"""
     message = " ".join(str(arg) for arg in args)
     print(colored("❌ ERROR:", "red"), colored(message, "red"), **kwargs, file=sys.stderr)
 
 
 def fatal(*args: Any, **kwargs: Any):
-    """致命错误信息 - 始终显示并退出"""
+    """Fatal error information - always shown and exit"""
     error(*args, **kwargs)
     sys.exit(1)
 
 
 def debug_plain(*args: Any, **kwargs: Any):
-    """调试信息（无图标） - 只在调试模式下显示（灰色）"""
+    """Debug information (no icon) - only shown in debug mode (gray)"""
     if _debug_mode:
         message = " ".join(str(arg) for arg in args)
         print(colored(message, "gray"), **kwargs)
 
 
 def info_plain(*args: Any, **kwargs: Any):
-    """普通信息（无图标） - 始终显示"""
+    """General information (no icon) - always shown"""
     print(*args, **kwargs)
 
 
-# 简洁版本（用于进度更新等）
+# Concise versions (for progress updates, etc.)
 def progress(*args: Any, **kwargs: Any):
-    """进度信息 - 始终显示（品红色）"""
+    """Progress information - always shown (magenta)"""
     message = " ".join(str(arg) for arg in args)
     print(colored("⏳", "magenta"), colored(message, "magenta"), **kwargs)
 
 
 def step(*args: Any, **kwargs: Any):
-    """步骤信息 - 始终显示（蓝色）"""
+    """Step information - always shown (blue)"""
     message = " ".join(str(arg) for arg in args)
     print(colored("➡️", "blue"), colored(message, "blue"), **kwargs)
