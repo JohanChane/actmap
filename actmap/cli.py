@@ -217,8 +217,7 @@ def get_available_interfaces(ctx, param, incomplete):
 @click.argument('command', nargs=-1, type=click.UNPROCESSED, shell_complete=get_available_interfaces)
 @click.pass_context
 def map(ctx, command):
-    """Map command
-    """
+    """Map command from source package manager to target package manager"""
 
     # Get options from context
     debug_mode = ctx.obj.get('debug_mode', False)
@@ -233,7 +232,7 @@ def map(ctx, command):
     debug(f"Received arguments: {command}")
     debug(f"Debug mode: {debug_mode}")
     debug(f"Target package manager: {target}")
-    debug(f"Source package manager: {source}")  # New debug information
+    debug(f"Source package manager: {source}")
     debug(f"Configuration file: {config}")
     
     try:
