@@ -2,6 +2,10 @@
 
 A powerful command-line tool for intelligently mapping commands between different package managers. Allows you to use familiar package manager syntax on any system!
 
+## Languages
+
+[中文](./README_ZH.md)
+
 ## Project Status
 
 Currently under development, it's a work in progress. Many things are not yet finalized, and significant changes may occur later.
