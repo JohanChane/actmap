@@ -1,0 +1,25 @@
+# === action 接口配置 ===
+[actions.install]
+description = "安装软件包"
+args = ["pkgs"]
+
+[actions.search_remote]
+description = "搜索远程仓库中的软件包"
+args = ["pkgs"]
+
+[actions.search_local]
+description = "搜索本地已安装的软件包"
+args = ["pkgs"]
+
+[actions.list_installed]
+description = "列出已安装的软件包"
+args = []
+
+[actions.help]
+description = "显示帮助信息"
+args = []
+
+# ## list_files (列出包文件)
+[actions.list_files]
+description = "列出包的文件"
+args = ["pkgs"]
